@@ -1,0 +1,8 @@
+# 원본 채팅 로그 (프라이버시)
+members/
+curation/
+persona_results/
+verify_*.png
+.playwright-cli/
+.git/
+node_modules/

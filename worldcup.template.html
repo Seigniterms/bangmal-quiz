@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>💘 반말방 이상형 월드컵 1탄</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --pink:#ff8fab; --pink-deep:#fb6f92; --pink-soft:#ffc2d1; --pink-bg:#fff0f3;
+    --brown:#5c4a4a; --gold:#ffb703; --purple:#b565d8;
+  }
+  body {
+    font-family:'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;
+    background:linear-gradient(160deg,#ffe5ec 0%,#fff0f3 45%,#fff8f0 100%);
+    min-height:100vh; color:var(--brown); overflow-x:hidden;
+    display:flex; justify-content:center;
+  }
+  #app { width:100%; max-width:520px; padding:20px 16px 60px; position:relative; z-index:2; }
+  .floating-hearts { position:fixed; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
+  .floating-hearts span { position:absolute; bottom:-40px; font-size:20px; opacity:.35; animation:floatUp linear infinite; }
+  @keyframes floatUp {
+    0% { transform:translateY(0) rotate(0deg); opacity:0; } 10% { opacity:.4; }
+    90% { opacity:.35; } 100% { transform:translateY(-110vh) rotate(30deg); opacity:0; }
+  }
+  .card-box {
+    background:rgba(255,255,255,.92); border-radius:28px; padding:28px 22px;
+    box-shadow:0 8px 32px rgba(251,111,146,.18), 0 2px 8px rgba(251,111,146,.10);
+    backdrop-filter:blur(6px);
+  }
+  .screen { display:none; animation:pop .35s ease; }
+  .screen.active { display:block; }
+  @keyframes pop { from { transform:scale(.96) translateY(8px); opacity:0; } to { transform:none; opacity:1; } }
+  h1 { text-align:center; font-size:26px; margin:14px 0 6px; color:var(--pink-deep); letter-spacing:-.5px; }
+  .title-emoji { font-size:56px; text-align:center; animation:beat 1.4s ease infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1);} 12%{transform:scale(1.15);} 24%{transform:scale(1);} 36%{transform:scale(1.12);} 48%{transform:scale(1);} }
+  .subtitle { text-align:center; font-size:14px; color:#a17887; line-height:1.7; margin-bottom:22px; }
+  .btn {
+    display:block; width:100%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--pink) 0%,var(--pink-deep) 100%);
+    color:#fff; font-size:18px; font-weight:700; padding:16px;
+    border-radius:999px; box-shadow:0 6px 18px rgba(251,111,146,.45);
+    transition:transform .12s ease; font-family:inherit;
+  }
+  .btn:active { transform:scale(.96); }
+  .btn.secondary { background:#fff; color:var(--pink-deep); border:2px solid var(--pink-soft); box-shadow:none; }
+
+  /* 대전 화면 */
+  .round-label { text-align:center; margin-bottom:6px; }
+  .round-badge {
+    display:inline-block; background:linear-gradient(135deg,var(--purple),var(--pink-deep));
+    color:#fff; font-weight:800; font-size:15px; padding:8px 20px; border-radius:999px;
+    box-shadow:0 4px 12px rgba(181,101,216,.35);
+  }
+  .round-sub { text-align:center; font-size:13px; color:#b0828f; margin:8px 0 16px; }
+  .vs-wrap { display:flex; flex-direction:column; gap:12px; align-items:stretch; }
+  .vs-badge {
+    align-self:center; font-size:22px; font-weight:900; color:var(--pink-deep);
+    background:#fff; width:52px; height:52px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 14px rgba(251,111,146,.3); margin:-4px 0;
+    border:3px solid var(--pink-soft); flex-shrink:0;
+  }
+  .pick-card {
+    background:#fff; border:3px solid var(--pink-soft); border-radius:24px;
+    padding:20px 18px; cursor:pointer; transition:all .18s ease; position:relative;
+    text-align:left; font-family:inherit; color:var(--brown); width:100%;
+  }
+  .pick-card:hover { border-color:var(--pink); transform:translateY(-3px); box-shadow:0 10px 24px rgba(251,111,146,.25); }
+  .pick-card .who { font-size:13px; color:#c9a0ac; font-weight:700; margin-bottom:10px; letter-spacing:1px; }
+  .pick-card .bubble {
+    background:var(--pink-bg); border-radius:16px 16px 16px 4px; padding:14px 16px;
+    font-size:15px; line-height:1.65; font-weight:600; white-space:pre-line; word-break:keep-all;
+  }
+  .pick-card .ep-title { margin-top:10px; font-size:12px; color:#b0828f; }
+  .pick-card.chosen { border-color:var(--pink-deep); background:var(--pink-bg); animation:chosenPop .35s ease; }
+  .pick-card.rejected { opacity:.35; filter:grayscale(.6); }
+  @keyframes chosenPop { 0%{transform:scale(1);} 40%{transform:scale(1.05);} 100%{transform:scale(1);} }
+
+  /* 결과 화면 */
+  .reveal-stage { text-align:center; }
+  .drumroll { font-size:18px; font-weight:700; color:#a17887; margin:20px 0; animation:beat 1s ease infinite; }
+  .champ-card {
+    background:linear-gradient(160deg,#fff,#fff0f6); border:3px solid var(--gold);
+    border-radius:28px; padding:30px 24px; box-shadow:0 12px 40px rgba(255,183,3,.25);
+    animation:champIn .6s ease;
+  }
+  @keyframes champIn { 0%{transform:rotateY(90deg) scale(.8); opacity:0;} 100%{transform:none; opacity:1;} }
+  .champ-emoji { font-size:72px; }
+  .champ-name { font-size:24px; font-weight:800; color:var(--pink-deep); margin:10px 0 4px; }
+  .champ-liner { font-size:14px; color:#8a5a6b; line-height:1.6; margin-bottom:14px; }
+  .champ-quote {
+    background:var(--pink-bg); border-radius:16px 16px 16px 4px; padding:14px 16px;
+    font-size:15px; line-height:1.6; font-weight:600; text-align:left; white-space:pre-line;
+  }
+  .compat { margin:16px 0 4px; font-size:15px; font-weight:800; }
+  .compat-hearts { font-size:22px; letter-spacing:2px; }
+  .match-desc { font-size:14px; color:#8a5a6b; line-height:1.7; margin-top:10px; }
+  .runner-up { margin-top:16px; font-size:14px; color:#a17887; }
+  .runner-up b { color:var(--pink-deep); }
+  .btn-row { display:flex; flex-direction:column; gap:10px; margin-top:20px; }
+  .toast {
+    position:fixed; left:50%; bottom:30px; transform:translateX(-50%);
+    background:var(--brown); color:#fff; padding:12px 22px; border-radius:999px;
+    font-size:14px; font-weight:600; opacity:0; transition:opacity .3s; z-index:99; pointer-events:none;
+  }
+  .toast.show { opacity:.95; }
+  .confetti { position:fixed; top:-30px; font-size:24px; z-index:50; pointer-events:none; animation:fall linear forwards; }
+  @keyframes fall { to { transform:translateY(110vh) rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="floating-hearts" id="hearts"></div>
+<div id="app">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="screen-start">
+    <div class="card-box">
+      <div class="title-emoji">💘</div>
+      <h1>반말방 이상형 월드컵 1탄</h1>
+      <p class="subtitle">이름도, 얼굴도 모른 채<br><b>발언과 에피소드만</b> 보고 끌리는 사람을 골라보세요.<br>당신의 이상형은 누구일까요? 😳<br><span style="font-size:12px">※ 재미로 보는 우리 방 전용 블라인드 매치</span></p>
+      <button class="btn" onclick="startCup()">💘 8강 시작하기</button>
+      <div style="height:10px"></div>
+      <button class="btn secondary" onclick="location.href='index.html'">💛 반말방 퀴즈 1탄 하러가기</button>
+    </div>
+  </div>
+
+  <!-- 대전 화면 -->
+  <div class="screen" id="screen-match">
+    <div class="round-label"><span class="round-badge" id="round-badge">8강</span></div>
+    <p class="round-sub" id="round-sub">더 끌리는 사람을 골라주세요 (이름은 비밀 🤫)</p>
+    <div class="vs-wrap">
+      <button class="pick-card" id="card-a" onclick="pick(0)"></button>
+      <div class="vs-badge">VS</div>
+      <button class="pick-card" id="card-b" onclick="pick(1)"></button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen" id="screen-result">
+    <div class="reveal-stage">
+      <div class="drumroll" id="drumroll">💓 두구두구두구... 당신의 이상형은...</div>
+      <div class="champ-card" id="champ-card" style="display:none">
+        <div class="champ-emoji" id="champ-emoji"></div>
+        <div class="champ-name" id="champ-name"></div>
+        <div class="champ-liner" id="champ-liner"></div>
+        <div class="champ-quote" id="champ-quote"></div>
+        <div class="compat" id="compat"></div>
+        <div class="compat-hearts" id="compat-hearts"></div>
+        <div class="match-desc" id="match-desc"></div>
+      </div>
+      <div class="runner-up" id="runner-up" style="display:none"></div>
+      <div class="btn-row" id="result-btns" style="display:none">
+        <button class="btn" onclick="copyResult()">📋 결과 복사해서 방에 자랑하기</button>
+        <button class="btn secondary" onclick="restart()">🔁 다시 하기 (대진 바뀜)</button>
+        <button class="btn secondary" onclick="location.href='index.html'">💛 반말방 퀴즈 1탄 하러가기</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast">복사 완료! 방에 붙여넣기 ㄱㄱ 💘</div>
+
+<script>
+const DATA = __WORLDCUP_DATA__;
+const SHARE_URL = 'https://bangmal-quiz.vercel.app/worldcup.html';
+
+let bracket = [], round = [], roundName = '', matchIdx = 0, currentPair = [];
+let champion = null, runnerUp = null, lock = false;
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+(function(){
+  const box = document.getElementById('hearts');
+  const emo = ['💘','💛','🩷','💖','🌸','✨'];
+  for(let i=0;i<14;i++){
+    const s = document.createElement('span');
+    s.textContent = emo[i%emo.length];
+    s.style.left = Math.random()*100+'vw';
+    s.style.animationDuration = (9+Math.random()*10)+'s';
+    s.style.animationDelay = (-Math.random()*12)+'s';
+    s.style.fontSize = (14+Math.random()*18)+'px';
+    box.appendChild(s);
+  }
+})();
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startCup(){
+  const pool = shuffle(DATA.members.slice()).slice(0, 8); // 10명 중 8명 랜덤
+  bracket = pool;
+  round = pool;
+  matchIdx = 0;
+  nextMatch('8강');
+  show('screen-match');
+}
+
+function nextMatch(name){
+  roundName = name;
+  if(round.length === 1){ finish(round[0], runnerUp); return; }
+  currentPair = [round[matchIdx*2], round[matchIdx*2+1]];
+  // 각 멤버 카드 풀에서 랜덤 1장
+  currentPair = currentPair.map(m => ({ member: m, card: m.cards[Math.floor(Math.random()*m.cards.length)] }));
+  const total = round.length / 2;
+  document.getElementById('round-badge').textContent = round.length===2 ? '💕 결승' : `${roundName} ${matchIdx+1}/${total}`;
+  renderCard('card-a', currentPair[0]);
+  renderCard('card-b', currentPair[1]);
+  document.getElementById('card-a').className = 'pick-card';
+  document.getElementById('card-b').className = 'pick-card';
+  lock = false;
+}
+
+function renderCard(id, entry){
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="who">💬 비밀의 방 사람</div>
+    <div class="bubble">${entry.card.quote}</div>
+    <div class="ep-title">🎬 ${entry.card.title}</div>`;
+}
+
+let winners = [];
+function pick(side){
+  if(lock) return;
+  lock = true;
+  const winEl = document.getElementById(side===0?'card-a':'card-b');
+  const loseEl = document.getElementById(side===0?'card-b':'card-a');
+  winEl.classList.add('chosen');
+  loseEl.classList.add('rejected');
+  const winner = currentPair[side].member;
+  const loser = currentPair[1-side].member;
+  winners.push(winner);
+  if(round.length === 2) runnerUp = loser; // 결승 패자 = 아쉬운 2위
+  setTimeout(()=>{
+    matchIdx++;
+    if(matchIdx*2 >= round.length){
+      round = winners.slice();
+      winners = [];
+      matchIdx = 0;
+      const name = round.length===4 ? '준결승' : round.length===2 ? '결승' : `${round.length}강`;
+      nextMatch(name);
+    } else {
+      nextMatch(roundName);
+    }
+  }, 650);
+}
+
+function finish(champ, runner){
+  champion = champ;
+  show('screen-result');
+  document.getElementById('drumroll').style.display = 'block';
+  document.getElementById('champ-card').style.display = 'none';
+  document.getElementById('runner-up').style.display = 'none';
+  document.getElementById('result-btns').style.display = 'none';
+  setTimeout(()=>{
+    document.getElementById('drumroll').style.display = 'none';
+    const score = 78 + Math.floor(Math.random()*21); // 78~98%
+    document.getElementById('champ-emoji').textContent = champ.emoji;
+    document.getElementById('champ-name').textContent = champ.name;
+    document.getElementById('champ-liner').textContent = champ.oneLiner;
+    const fav = champ.cards[Math.floor(Math.random()*champ.cards.length)];
+    document.getElementById('champ-quote').textContent = fav.quote;
+    document.getElementById('compat').textContent = `궁합 ${score}%`;
+    const full = Math.round(score/20);
+    document.getElementById('compat-hearts').textContent = '💗'.repeat(full) + '🤍'.repeat(5-full);
+    document.getElementById('match-desc').textContent = champ.matchDesc;
+    document.getElementById('champ-card').style.display = 'block';
+    if(runner){
+      document.getElementById('runner-up').innerHTML = `아쉬운 2위: <b>${runner.emoji} ${runner.name}</b>`;
+      document.getElementById('runner-up').style.display = 'block';
+    }
+    document.getElementById('result-btns').style.display = 'flex';
+    confettiRain();
+  }, 1800);
+}
+
+function confettiRain(){
+  const emo = ['💖','💘','💛','🎉','✨','🩷'];
+  for(let i=0;i<30;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.textContent = emo[i%emo.length];
+    c.style.left = Math.random()*100+'vw';
+    c.style.animationDuration = (2+Math.random()*2.5)+'s';
+    c.style.animationDelay = (Math.random()*0.8)+'s';
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 5200);
+  }
+}
+
+function copyResult(){
+  const text = `💘 반말방 이상형 월드컵 1탄\n내 이상형은... ${champion.emoji} ${champion.name}!\n궁합 ${document.getElementById('compat').textContent.replace('궁합 ','')}\n너도 핵봐 👉 ${SHARE_URL}`;
+  const done = ()=>{
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2000);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy'); ta.remove(); done();
+}
+function restart(){ startCup(); }
+</script>
+</body>
+</html>

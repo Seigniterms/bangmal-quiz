@@ -4,3 +4,4 @@ curation/
 persona_results/
 verify_*.png
 .playwright-cli/
+.vercel
