@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🧬 반말방 MBTI 1탄</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --pink:#ff8fab; --pink-deep:#fb6f92; --pink-soft:#ffc2d1; --pink-bg:#fff0f3;
+    --brown:#5c4a4a; --gold:#ffb703; --purple:#b565d8;
+  }
+  body {
+    font-family:'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;
+    background:linear-gradient(160deg,#ffe5ec 0%,#fff0f3 45%,#fff8f0 100%);
+    min-height:100vh; color:var(--brown); overflow-x:hidden;
+    display:flex; justify-content:center;
+  }
+  #app { width:100%; max-width:520px; padding:20px 16px 60px; position:relative; z-index:2; }
+  .floating-hearts { position:fixed; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
+  .floating-hearts span { position:absolute; bottom:-40px; font-size:20px; opacity:.35; animation:floatUp linear infinite; }
+  @keyframes floatUp {
+    0% { transform:translateY(0) rotate(0deg); opacity:0; } 10% { opacity:.4; }
+    90% { opacity:.35; } 100% { transform:translateY(-110vh) rotate(30deg); opacity:0; }
+  }
+  .card-box {
+    background:rgba(255,255,255,.92); border-radius:28px; padding:28px 22px;
+    box-shadow:0 8px 32px rgba(251,111,146,.18), 0 2px 8px rgba(251,111,146,.10);
+    backdrop-filter:blur(6px);
+  }
+  .screen { display:none; animation:pop .35s ease; }
+  .screen.active { display:block; }
+  @keyframes pop { from { transform:scale(.96) translateY(8px); opacity:0; } to { transform:none; opacity:1; } }
+  h1 { text-align:center; font-size:26px; margin:14px 0 6px; color:var(--pink-deep); letter-spacing:-.5px; }
+  .title-emoji { font-size:56px; text-align:center; animation:beat 1.4s ease infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1);} 12%{transform:scale(1.15);} 24%{transform:scale(1);} 36%{transform:scale(1.12);} 48%{transform:scale(1);} }
+  .subtitle { text-align:center; font-size:14px; color:#a17887; line-height:1.7; margin-bottom:22px; }
+  .btn {
+    display:block; width:100%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--pink) 0%,var(--pink-deep) 100%);
+    color:#fff; font-size:18px; font-weight:700; padding:16px;
+    border-radius:999px; box-shadow:0 6px 18px rgba(251,111,146,.45);
+    transition:transform .12s ease; font-family:inherit;
+  }
+  .btn:active { transform:scale(.96); }
+  .btn.secondary { background:#fff; color:var(--pink-deep); border:2px solid var(--pink-soft); box-shadow:none; }
+
+  /* 진행바 */
+  .progress-wrap { margin-bottom:16px; }
+  .progress-label { display:flex; justify-content:space-between; font-size:13px; color:#b0828f; margin-bottom:6px; font-weight:600; }
+  .progress-bar { height:12px; background:#ffe0e8; border-radius:999px; overflow:hidden; }
+  .progress-fill { height:100%; width:0%; border-radius:999px; background:linear-gradient(90deg,var(--purple),var(--pink-deep)); transition:width .4s ease; }
+
+  /* 문항 */
+  .q-text { text-align:center; font-size:18px; font-weight:800; line-height:1.5; margin-bottom:18px; word-break:keep-all; }
+  .opt {
+    display:block; width:100%; background:#fff; border:3px solid var(--pink-soft);
+    border-radius:22px; padding:20px 18px; cursor:pointer; font-family:inherit;
+    font-size:16px; font-weight:700; color:var(--brown); line-height:1.55;
+    transition:all .15s ease; text-align:center; word-break:keep-all;
+  }
+  .opt:hover { border-color:var(--pink); background:var(--pink-bg); transform:translateY(-2px); box-shadow:0 8px 20px rgba(251,111,146,.2); }
+  .opt:active { transform:scale(.97); }
+  .opt-gap { height:12px; }
+
+  /* 결과: 타입 */
+  .type-letters { display:flex; justify-content:center; gap:10px; margin:10px 0 4px; }
+  .type-letter {
+    width:56px; height:64px; border-radius:16px; background:linear-gradient(135deg,var(--pink) 0%,var(--pink-deep) 100%);
+    color:#fff; font-size:32px; font-weight:900; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(251,111,146,.35); animation:pop .4s ease backwards;
+  }
+  .type-letter:nth-child(2) { animation-delay:.08s; } .type-letter:nth-child(3) { animation-delay:.16s; } .type-letter:nth-child(4) { animation-delay:.24s; }
+  .type-letter-sub { display:flex; justify-content:center; gap:10px; margin-bottom:12px; }
+  .type-letter-sub span { width:56px; text-align:center; font-size:11px; font-weight:700; color:#b0828f; }
+  .type-name { text-align:center; font-size:24px; font-weight:900; color:var(--pink-deep); margin:4px 0 8px; }
+  .type-desc { text-align:center; font-size:14px; color:#8a6a75; line-height:1.7; margin-bottom:18px; word-break:keep-all; }
+
+  /* 축 게이지 */
+  .axis-list { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .axis-row { background:var(--pink-bg); border-radius:16px; padding:10px 14px; }
+  .axis-heads { display:flex; justify-content:space-between; font-size:13px; font-weight:800; margin-bottom:6px; }
+  .axis-heads .p1 { color:var(--purple); } .axis-heads .p2 { color:var(--pink-deep); }
+  .axis-bar { height:10px; background:#fff; border-radius:999px; overflow:hidden; }
+  .axis-fill { height:100%; background:linear-gradient(90deg,var(--purple),var(--pink-deep)); border-radius:999px; transition:width .8s cubic-bezier(.2,.8,.2,1); }
+  .axis-note { text-align:center; font-size:12px; color:#b0828f; margin-top:5px; font-weight:600; }
+
+  /* 결과: 멤버 매칭 */
+  .match-title { text-align:center; font-size:15px; font-weight:800; color:#a17887; margin:6px 0 10px; }
+  .match-card {
+    background:linear-gradient(135deg,#fff 0%,var(--pink-bg) 100%); border:2px solid var(--gold);
+    border-radius:20px; padding:18px; text-align:center; margin-bottom:12px;
+  }
+  .match-emoji { font-size:44px; }
+  .match-name { font-size:20px; font-weight:900; margin:4px 0; }
+  .match-same { font-size:13px; font-weight:800; color:var(--pink-deep); margin-bottom:6px; }
+  .match-blurb { font-size:13px; color:#8a6a75; line-height:1.6; word-break:keep-all; }
+  .chem-row { display:flex; gap:10px; margin-bottom:18px; }
+  .chem-box { flex:1; background:#fff; border:2px solid var(--pink-soft); border-radius:16px; padding:12px 10px; text-align:center; }
+  .chem-label { font-size:12px; font-weight:800; color:#b0828f; margin-bottom:4px; }
+  .chem-member { font-size:14px; font-weight:800; }
+  .chem-sub { font-size:11px; color:#b0828f; margin-top:2px; font-weight:600; }
+
+  .btn-row { display:flex; flex-direction:column; gap:10px; }
+  .toast {
+    position:fixed; left:50%; bottom:30px; transform:translateX(-50%);
+    background:var(--brown); color:#fff; padding:12px 22px; border-radius:999px;
+    font-size:14px; font-weight:600; opacity:0; transition:opacity .3s; z-index:99; pointer-events:none;
+  }
+  .toast.show { opacity:.95; }
+</style>
+</head>
+<body>
+<div class="floating-hearts" id="hearts"></div>
+<div id="app">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="screen-start">
+    <div class="card-box">
+      <div class="title-emoji">🧬</div>
+      <h1>반말방 MBTI 1탄</h1>
+      <p class="subtitle">12개 질문으로 알아보는 나의 방 성향!<br>벙주냐 벙객이냐, 볼룸파냐 텍스트파냐...<br><b>16가지 타입</b> 중 너는 어디?<br>우리 방 멤버 10명 중 <b>누구랑 제일 비슷한지</b>도 나옴 😎</p>
+      <button class="btn" onclick="startGame()">🧬 테스트 시작하기</button>
+      <div style="height:10px"></div>
+      <button class="btn secondary" onclick="location.href='index.html'">💛 퀴즈 1탄</button>
+      <div style="height:10px"></div>
+      <button class="btn secondary" onclick="location.href='worldcup.html'">💘 이상형 월드컵 1탄</button>
+      <div style="height:10px"></div>
+      <button class="btn secondary" onclick="location.href='balance.html'">😈 밸런스 게임 1탄</button>
+    </div>
+  </div>
+
+  <!-- 문항 화면 -->
+  <div class="screen" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="q-num">1 / 12</span><span id="q-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="card-box">
+      <div class="q-text" id="q-text"></div>
+      <button class="opt" id="opt-a" onclick="pick('a')"></button>
+      <div class="opt-gap"></div>
+      <button class="opt" id="opt-b" onclick="pick('b')"></button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen" id="screen-result">
+    <div class="card-box">
+      <div class="title-emoji" id="type-emoji">🧬</div>
+      <div class="type-letters" id="type-letters"></div>
+      <div class="type-letter-sub" id="type-letter-sub"></div>
+      <div class="type-name" id="type-name"></div>
+      <div class="type-desc" id="type-desc"></div>
+      <div class="axis-list" id="axis-list"></div>
+      <div class="match-title">💞 우리 방 소울메이트는...</div>
+      <div class="match-card">
+        <div class="match-emoji" id="match-emoji"></div>
+        <div class="match-name" id="match-name"></div>
+        <div class="match-same" id="match-same"></div>
+        <div class="match-blurb" id="match-blurb"></div>
+      </div>
+      <div class="chem-row">
+        <div class="chem-box">
+          <div class="chem-label">💗 환상의 궁합</div>
+          <div class="chem-member" id="chem-good"></div>
+          <div class="chem-sub" id="chem-good-sub"></div>
+        </div>
+        <div class="chem-box">
+          <div class="chem-label">💥 극과 극 상극</div>
+          <div class="chem-member" id="chem-bad"></div>
+          <div class="chem-sub" id="chem-bad-sub"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="copyResult()">📋 결과 복사해서 방에 자랑하기</button>
+        <button class="btn secondary" onclick="restart()">🔁 다시 하기</button>
+        <button class="btn secondary" onclick="location.href='index.html'">💛 퀴즈 1탄</button>
+        <button class="btn secondary" onclick="location.href='worldcup.html'">💘 이상형 월드컵 1탄</button>
+        <button class="btn secondary" onclick="location.href='balance.html'">😈 밸런스 게임 1탄</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast">복사 완료! 방에 붙여넣기 ㄱㄱ 🧬</div>
+
+<script>
+const DATA = {
+ "axes": [
+  {
+   "id": "O",
+   "letter1": "O",
+   "letter2": "J",
+   "pole1": "벙주",
+   "pole2": "벙객",
+   "pole1_desc": "직접 벙을 여는 주최형",
+   "pole2_desc": "남이 연 벙에 참석하는 참여형"
+  },
+  {
+   "id": "V",
+   "letter1": "V",
+   "letter2": "T",
+   "pole1": "볼룸파",
+   "pole2": "텍스트파",
+   "pole1_desc": "보이스룸에 살다시피 하는 음성형",
+   "pole2_desc": "채팅으로만 노는 텍스트형"
+  },
+  {
+   "id": "D",
+   "letter1": "D",
+   "letter2": "R",
+   "pole1": "드립공격수",
+   "pole2": "리액션부자",
+   "pole1_desc": "밈과 드립을 제조하는 공격형",
+   "pole2_desc": "웃어주고 받아주는 리액션형"
+  },
+  {
+   "id": "N",
+   "letter1": "N",
+   "letter2": "M",
+   "pole1": "야행성",
+   "pole2": "주간형",
+   "pole1_desc": "밤에 진가를 발휘하는 올빼미",
+   "pole2_desc": "낮에 활동하는 아침형"
+  }
+ ],
+ "questions": [
+  {
+   "id": 1,
+   "axis": "O",
+   "a": "내가 연다. 날짜·장소 대충 찍어서 공지부터 올림",
+   "b": "누가 열 때까지 기다리면서 채팅으로 놀 사람 구함",
+   "q": "놀고 싶은데 아무도 벙을 안 연다면?"
+  },
+  {
+   "id": 2,
+   "axis": "O",
+   "a": "내가 주도해야 마음이 편함",
+   "b": "정해주면 몸만 가는 게 최고",
+   "q": "벙 준비(장소·시간·예약)는 어떻게 하는 편?"
+  },
+  {
+   "id": 3,
+   "axis": "O",
+   "a": "진행·공지·인원 체크까지 챙기는 편",
+   "b": "분위기 따라 놀다 오는 참석러",
+   "q": "벙에 가면 네 역할은?"
+  },
+  {
+   "id": 4,
+   "axis": "V",
+   "a": "거의 매번 들어가서 논다",
+   "b": "잘 안 들어감. 채팅이 훨씬 편함",
+   "q": "볼룸(보이스룸) 링크가 올라왔다!"
+  },
+  {
+   "id": 5,
+   "axis": "V",
+   "a": "1시간 이상은 기본으로 남아있음",
+   "b": "얼마 안 있고 나옴 (또는 안 들어감)",
+   "q": "볼룸에 들어가면 너는?"
+  },
+  {
+   "id": 6,
+   "axis": "V",
+   "a": "볼룸 — 목소리로 놀아야 직성이 풀림",
+   "b": "채팅창 — 타이핑이 내 무대",
+   "q": "밤에 노는 네 메인 무대는?"
+  },
+  {
+   "id": 7,
+   "axis": "D",
+   "a": "한 마디 얹어서 더 웃기게 만드는 편",
+   "b": "일단 ㅋㅋㅋ부터 치는 편",
+   "q": "웃긴 상황이 터지면?"
+  },
+  {
+   "id": 8,
+   "axis": "D",
+   "a": "내가 만든 것도 여럿 있음",
+   "b": "거의 남이 만든 걸 즐기는 편",
+   "q": "방의 밈(유행어·드립) 중에?"
+  },
+  {
+   "id": 9,
+   "axis": "D",
+   "a": "더한 개그로 맞받아침",
+   "b": "별거 아닌데 빵 터짐",
+   "q": "아재개그가 나오면?"
+  },
+  {
+   "id": 10,
+   "axis": "N",
+   "a": "밤 10시 넘어서부터가 진짜 시작",
+   "b": "그 전 — 아침부터 저녁 사이",
+   "q": "네 활동 본방 시간대는?"
+  },
+  {
+   "id": 11,
+   "axis": "N",
+   "a": "새벽까지 버티는 날이 잦음",
+   "b": "자정 전엔 거의 잠듦",
+   "q": "자정을 넘기는 빈도는?"
+  },
+  {
+   "id": 12,
+   "axis": "N",
+   "a": "늦게 일어나 밤샘 채팅 몰아 읽기",
+   "b": "일찍 일어나 채팅방에 아침 인사",
+   "q": "아침에 너는?"
+  }
+ ],
+ "types": {
+  "OVDN": {
+   "emoji": "🔥",
+   "name": "심야 벙 사령관",
+   "desc": "벙을 열고, 볼룸을 켜고, 드립을 던지고, 밤을 샌다. 방의 밤은 네가 지배하는 풀오픈형 리더."
+  },
+  "OVDM": {
+   "emoji": "☀️",
+   "name": "주간형 벙 대장",
+   "desc": "낮부터 벙을 열고 볼룸까지 켜는 추진력 만렙. 에너지는 자정 전에 마감하는 건강한 사령관."
+  },
+  "OVRN": {
+   "emoji": "🎪",
+   "name": "심야 흥행 사회자",
+   "desc": "벙 열고 볼룸 켜놓고 밤새 웃어주는 MC. 네가 있어야 심야 방송이 돌아간다."
+  },
+  "OVRM": {
+   "emoji": "🎤",
+   "name": "낮의 이벤트 진행자",
+   "desc": "대낮부터 벙 열고 볼룸 켜는 행동파. 낮 방송은 네가 책임지는 주간 사회자."
+  },
+  "OTDN": {
+   "emoji": "🌙",
+   "name": "심야 기획자",
+   "desc": "밤에 조용히 벙을 설계하고 채팅 드립으로 방을 흔드는 텍스트형 설계자."
+  },
+  "OTDM": {
+   "emoji": "📋",
+   "name": "아침형 행사반장",
+   "desc": "아침부터 벙 공지를 올리고 썰을 푸는 반장님. 방의 일정은 네 손안에 있다."
+  },
+  "OTRN": {
+   "emoji": "🛋️",
+   "name": "밤의 느긋한 벙주",
+   "desc": "벙은 내가 열지만 반응은 느긋하게. 밤 채팅으로 무드를 잡는 여유형 주최자."
+  },
+  "OTRM": {
+   "emoji": "🍀",
+   "name": "낮의 평화 벙주",
+   "desc": "낮에 벙 열고 다 같이 웃으며 진행하는 힐링형 주최자. 네 벙은 왠지 편안하다."
+  },
+  "JVDN": {
+   "emoji": "🦉",
+   "name": "심야 볼룸 드립러",
+   "desc": "남이 연 벙에 입장해 볼룸에서 드립 치며 밤을 새우는 심야 공격수."
+  },
+  "JVDM": {
+   "emoji": "🎙️",
+   "name": "주간 볼룸 참석러",
+   "desc": "낮에 열리는 벙과 볼룸엔 빠짐없이 들어가서 드립 한 사발씩 던지는 인싸."
+  },
+  "JVRN": {
+   "emoji": "🍿",
+   "name": "볼룸 구경단장",
+   "desc": "남이 연 벙과 볼룸에 들어가 밤새 웃어주는 최고의 관객. 네가 웃어야 방이 산다."
+  },
+  "JVRM": {
+   "emoji": "🧸",
+   "name": "낮의 볼룸 힐러",
+   "desc": "낮 볼룸에 앉아 리액션으로 분위기를 살리는 힐링형 청취자."
+  },
+  "JTDN": {
+   "emoji": "🌃",
+   "name": "심야 채팅 저격수",
+   "desc": "밤 채팅에서 드립을 던지는 텍스트형 스나이퍼. 조용히 있다가 한방씩 친다."
+  },
+  "JTDM": {
+   "emoji": "💼",
+   "name": "점심시간 드립부장",
+   "desc": "근무시간 틈틈이 채팅으로 드립 치는 직장인 드립러. 오전 채팅은 네 묘대."
+  },
+  "JTRN": {
+   "emoji": "🎧",
+   "name": "심야 리액션 요정",
+   "desc": "밤 채팅에서 제일 크게 웃어주는 리액션 요정. 네 웃음이 방의 사운드트랙."
+  },
+  "JTRM": {
+   "emoji": "😆",
+   "name": "낮의 자체 웃음벨",
+   "desc": "낮에 뭐만 하면 ㅋㅋㅋ 도배하는 인간 웃음버튼. 네가 웃어야 낮 방이 돌아간다."
+  }
+ },
+ "members": [
+  {
+   "name": "닭발 수원 남",
+   "emoji": "🍗",
+   "blurb": "벙 열고 볼룸 켜고 밤새 드립까지, 심야 에너지의 화신",
+   "code": "OVDN",
+   "answers": [
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b"
+   ]
+  },
+  {
+   "name": "우주 은평 여",
+   "emoji": "🚀",
+   "blurb": "아침부터 벙 영업하고 사람 모으는 추진력 만렙 리더",
+   "code": "OVDM",
+   "answers": [
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b",
+    "a",
+    "b"
+   ]
+  },
+  {
+   "name": "씽씽 신도림 여",
+   "emoji": "🎤",
+   "blurb": "밤마다 볼룸을 열고 끝까지 웃어주는 흥부자 사회자",
+   "code": "OVDN",
+   "answers": [
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b",
+    "a",
+    "a",
+    "a"
+   ]
+  },
+  {
+   "name": "늉니 가산 남",
+   "emoji": "🧞",
+   "blurb": "밤마다 벙을 기획하고 기록까지 정리하는 채팅형 설계자",
+   "code": "OVDM",
+   "answers": [
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b",
+    "b"
+   ]
+  },
+  {
+   "name": "호두 용인 남",
+   "emoji": "🌰",
+   "blurb": "아침부터 벙 공지 올리고 썰 푸는 우리 방 행사반장",
+   "code": "OTDM",
+   "answers": [
+    "a",
+    "a",
+    "a",
+    "b",
+    "b",
+    "b",
+    "a",
+    "a",
+    "b",
+    "b",
+    "b",
+    "b"
+   ]
+  },
+  {
+   "name": "냥냥 인천 여",
+   "emoji": "🐱",
+   "blurb": "벙과 볼룸을 밤새 구경하며 애교로 받아치는 구경단장",
+   "code": "JVRN",
+   "answers": [
+    "a",
+    "b",
+    "b",
+    "a",
+    "a",
+    "a",
+    "b",
+    "a",
+    "b",
+    "a",
+    "a",
+    "a"
+   ]
+  },
+  {
+   "name": "엠줴 인천 여",
+   "emoji": "🐶",
+   "blurb": "밤 채팅에서 질문과 드립으로 대화를 주도하는 수다왕",
+   "code": "JVRN",
+   "answers": [
+    "b",
+    "b",
+    "b",
+    "a",
+    "a",
+    "a",
+    "b",
+    "b",
+    "b",
+    "a",
+    "a",
+    "b"
+   ]
+  },
+  {
+   "name": "저당 수원 여",
+   "emoji": "🧋",
+   "blurb": "오전 채팅에서 장난을 주도하는 컨셉 장인 드립러",
+   "code": "JTRM",
+   "answers": [
+    "a",
+    "b",
+    "b",
+    "b",
+    "b",
+    "b",
+    "b",
+    "a",
+    "b",
+    "b",
+    "b",
+    "b"
+   ]
+  },
+  {
+   "name": "라이언 강서 남",
+   "emoji": "🏀",
+   "blurb": "밤 채팅에서 제일 크게 웃고 제일 잘 속아주는 리액션 담당",
+   "code": "JTDM",
+   "answers": [
+    "a",
+    "b",
+    "b",
+    "b",
+    "b",
+    "b",
+    "a",
+    "a",
+    "a",
+    "a",
+    "b",
+    "b"
+   ]
+  },
+  {
+   "name": "꿀꿀 양천 여",
+   "emoji": "🏋️",
+   "blurb": "낮 내내 웃음벨을 울리며 방 분위기를 띄우는 비타민",
+   "code": "JTRN",
+   "answers": [
+    "a",
+    "b",
+    "b",
+    "b",
+    "a",
+    "b",
+    "b",
+    "a",
+    "b",
+    "a",
+    "a",
+    "b"
+   ]
+  }
+ ]
+};
+const SHARE_URL = 'https://bangmal-quiz.vercel.app/mbti.html';
+const AXIS_LETTER1 = {O:'O', V:'V', D:'D', N:'N'};
+const AXIS_LETTER2 = {O:'J', V:'T', D:'R', N:'M'};
+
+let order = [], cur = 0, answers = [];
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+(function(){
+  const box = document.getElementById('hearts');
+  const emo = ['🧬','💜','🩷','💖','✨','🔮'];
+  for(let i=0;i<14;i++){
+    const s = document.createElement('span');
+    s.textContent = emo[i%emo.length];
+    s.style.left = Math.random()*100+'vw';
+    s.style.animationDuration = (9+Math.random()*10)+'s';
+    s.style.animationDelay = (-Math.random()*12)+'s';
+    s.style.fontSize = (14+Math.random()*18)+'px';
+    box.appendChild(s);
+  }
+})();
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startGame(){
+  order = DATA.questions.map((q,i)=>i); // 축 순서 유지 (셔플 안 함 — 축별 측정 느낌 살리기)
+  cur = 0; answers = [];
+  show('screen-quiz');
+  renderQ();
+}
+
+function renderQ(){
+  const q = DATA.questions[order[cur]];
+  document.getElementById('q-num').textContent = `${cur+1} / ${order.length}`;
+  const pct = Math.round(cur/order.length*100);
+  document.getElementById('q-pct').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('opt-a').textContent = q.a;
+  document.getElementById('opt-b').textContent = q.b;
+}
+
+function pick(side){
+  answers.push(side);
+  cur++;
+  if(cur>=order.length){ showResult(); return; }
+  renderQ();
+}
+
+function axisCounts(){
+  // 축별 a(앞극) 개수 0~3
+  const counts = {};
+  DATA.axes.forEach((ax, ai)=>{
+    let n = 0;
+    for(let i=0;i<order.length;i++){
+      if(DATA.questions[order[i]].axis === ax.id && answers[i] === 'a') n++;
+    }
+    counts[ax.id] = n;
+  });
+  return counts;
+}
+
+function myCode(counts){
+  return DATA.axes.map(ax=> counts[ax.id]>=2 ? AXIS_LETTER1[ax.id] : AXIS_LETTER2[ax.id]).join('');
+}
+
+function memberDistances(){
+  // 유저 답안지 vs 멤버 답안지 (문항 id 기준으로 정렬해 비교)
+  const mineById = {};
+  order.forEach((qi,i)=>{ mineById[DATA.questions[qi].id] = answers[i]; });
+  return DATA.members.map(m=>{
+    let d = 0;
+    m.answers.forEach((a, i)=>{ if(a !== mineById[i+1]) d++; });
+    return {...m, dist: d, same: 12 - d};
+  }).sort((x,y)=> x.dist - y.dist);
+}
+
+function showResult(){
+  const counts = axisCounts();
+  const code = myCode(counts);
+  const type = DATA.types[code];
+  const ranking = memberDistances();
+  const soul = ranking[0];
+  const chem = ranking[1];
+  const worst = ranking[ranking.length-1];
+
+  document.getElementById('type-emoji').textContent = type.emoji;
+  document.getElementById('type-letters').innerHTML = code.split('').map(l=>`<div class="type-letter">${l}</div>`).join('');
+  document.getElementById('type-letter-sub').innerHTML = DATA.axes.map((ax,i)=>{
+    const pole = code[i]===AXIS_LETTER1[ax.id] ? ax.pole1 : ax.pole2;
+    return `<span>${pole}</span>`;
+  }).join('');
+  document.getElementById('type-name').textContent = `${type.emoji} ${type.name}`;
+  document.getElementById('type-desc').textContent = type.desc;
+
+  document.getElementById('axis-list').innerHTML = DATA.axes.map(ax=>{
+    const n = counts[ax.id];
+    const pct = Math.round(n/3*100);
+    const note = n>=2 ? `${ax.pole1} ${n}/3` : `${ax.pole2} ${3-n}/3`;
+    return `<div class="axis-row">
+      <div class="axis-heads"><span class="p1">${ax.pole1}</span><span class="p2">${ax.pole2}</span></div>
+      <div class="axis-bar"><div class="axis-fill" style="width:${Math.max(pct,8)}%"></div></div>
+      <div class="axis-note">${note}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('match-emoji').textContent = soul.emoji;
+  document.getElementById('match-name').textContent = soul.name;
+  document.getElementById('match-same').textContent = `12문항 중 ${soul.same}개 일치 💘`;
+  document.getElementById('match-blurb').textContent = soul.blurb;
+  document.getElementById('chem-good').textContent = `${chem.emoji} ${chem.name.split(' ')[0]}`;
+  document.getElementById('chem-good-sub').textContent = `${chem.same}개 일치`;
+  document.getElementById('chem-bad').textContent = `${worst.emoji} ${worst.name.split(' ')[0]}`;
+  document.getElementById('chem-bad-sub').textContent = `${worst.same}개 일치`;
+
+  show('screen-result');
+}
+
+function copyResult(){
+  const counts = axisCounts();
+  const code = myCode(counts);
+  const type = DATA.types[code];
+  const soul = memberDistances()[0];
+  const text = `🧬 반말방 MBTI 1탄\n내 타입: ${code} — ${type.emoji} ${type.name}\n우리 방 소울메이트: ${soul.emoji} ${soul.name} (12개 중 ${soul.same}개 일치)\n너도 핵봐 👉 ${SHARE_URL}`;
+  const done = ()=>{
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 2000);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy'); ta.remove(); done();
+}
+function restart(){ startGame(); }
+</script>
+</body>
+</html>

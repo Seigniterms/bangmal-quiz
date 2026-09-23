@@ -8,3 +8,5 @@ verify_*.png
 node_modules/
 balance_votes/
 bal_*.png
+mbti_votes/
+mbti_*.png

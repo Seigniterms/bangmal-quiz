@@ -8,3 +8,5 @@ verify_*.png
 balance_votes/
 bal_*.png
 .DS_Store
+mbti_votes/
+mbti_*.png
