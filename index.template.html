@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>💛 반말방 인물 퀴즈 💛</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --pink:#ff8fab; --pink-deep:#fb6f92; --pink-soft:#ffc2d1; --pink-bg:#fff0f3;
+    --cream:#fff8f0; --brown:#5c4a4a; --gold:#ffb703;
+  }
+  body {
+    font-family:'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;
+    background:linear-gradient(160deg,#ffe5ec 0%,#fff0f3 45%,#fff8f0 100%);
+    min-height:100vh; color:var(--brown); overflow-x:hidden;
+    display:flex; justify-content:center;
+  }
+  #app { width:100%; max-width:480px; padding:20px 16px 60px; position:relative; z-index:2; }
+  .floating-hearts { position:fixed; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
+  .floating-hearts span {
+    position:absolute; bottom:-40px; font-size:20px; opacity:.35;
+    animation:floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform:translateY(0) rotate(0deg); opacity:0; }
+    10% { opacity:.4; }
+    90% { opacity:.35; }
+    100% { transform:translateY(-110vh) rotate(30deg); opacity:0; }
+  }
+  .card {
+    background:rgba(255,255,255,.92); border-radius:28px; padding:28px 22px;
+    box-shadow:0 8px 32px rgba(251,111,146,.18), 0 2px 8px rgba(251,111,146,.10);
+    backdrop-filter:blur(6px);
+  }
+  .screen { display:none; animation:pop .35s ease; }
+  .screen.active { display:block; }
+  @keyframes pop { from { transform:scale(.96) translateY(8px); opacity:0; } to { transform:none; opacity:1; } }
+
+  /* 시작 화면 */
+  .title-emoji { font-size:56px; text-align:center; animation:beat 1.4s ease infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1);} 12%{transform:scale(1.15);} 24%{transform:scale(1);} 36%{transform:scale(1.12);} 48%{transform:scale(1);} }
+  h1 { text-align:center; font-size:26px; margin:14px 0 6px; color:var(--pink-deep); letter-spacing:-.5px; }
+  .subtitle { text-align:center; font-size:14px; color:#a17887; line-height:1.6; margin-bottom:22px; }
+  .btn {
+    display:block; width:100%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--pink) 0%,var(--pink-deep) 100%);
+    color:#fff; font-size:18px; font-weight:700; padding:16px;
+    border-radius:999px; box-shadow:0 6px 18px rgba(251,111,146,.45);
+    transition:transform .12s ease, box-shadow .12s ease; font-family:inherit;
+  }
+  .btn:active { transform:scale(.96); box-shadow:0 3px 10px rgba(251,111,146,.4); }
+  .btn.secondary { background:#fff; color:var(--pink-deep); border:2px solid var(--pink-soft); box-shadow:none; }
+  .member-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:18px 0 24px; }
+  .chip {
+    background:#fff; border:1.5px solid var(--pink-soft); border-radius:999px;
+    padding:6px 12px; font-size:13px; color:#8a5a6b;
+  }
+
+  /* 퀴즈 화면 */
+  .progress-wrap { margin-bottom:16px; }
+  .progress-label { display:flex; justify-content:space-between; font-size:13px; color:#b0828f; margin-bottom:6px; font-weight:600; }
+  .progress-bar { height:12px; background:#ffe0e8; border-radius:999px; overflow:hidden; }
+  .progress-fill {
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg,var(--pink-soft),var(--pink-deep));
+    transition:width .4s ease;
+  }
+  .score-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .score-pill { background:#fff; border-radius:999px; padding:6px 14px; font-size:14px; font-weight:700; color:var(--pink-deep); box-shadow:0 2px 8px rgba(251,111,146,.15); }
+  .streak { font-size:14px; color:var(--gold); font-weight:700; }
+  .q-type {
+    display:inline-block; font-size:12px; font-weight:700; padding:4px 12px;
+    border-radius:999px; background:var(--pink-bg); color:var(--pink-deep); margin-bottom:12px;
+  }
+  .question { font-size:17px; font-weight:700; line-height:1.65; margin-bottom:20px; word-break:keep-all; }
+  .choices { display:flex; flex-direction:column; gap:10px; }
+  .choice {
+    border:2px solid var(--pink-soft); background:#fff; border-radius:18px;
+    padding:14px 16px; font-size:15px; font-weight:600; color:var(--brown);
+    cursor:pointer; text-align:left; transition:all .15s ease; font-family:inherit;
+    display:flex; align-items:center; gap:10px;
+  }
+  .choice:hover { border-color:var(--pink); background:var(--pink-bg); }
+  .choice:disabled { cursor:default; }
+  .choice.correct { border-color:#6bcb77; background:#eafff0; color:#2f7d3b; }
+  .choice.wrong { border-color:#ff6b6b; background:#fff0f0; color:#c0392b; animation:shake .3s; }
+  .choice.dim { opacity:.45; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+  .explain {
+    margin-top:16px; background:var(--pink-bg); border-radius:16px; padding:14px 16px;
+    font-size:14px; line-height:1.6; color:#8a5a6b; display:none;
+  }
+  .explain.show { display:block; animation:pop .3s ease; }
+  .next-btn { margin-top:16px; display:none; }
+  .next-btn.show { display:block; }
+  .heart-burst { position:fixed; font-size:26px; pointer-events:none; z-index:50; animation:burst .9s ease forwards; }
+  @keyframes burst {
+    0% { transform:translate(0,0) scale(.4); opacity:1; }
+    100% { transform:translate(var(--dx),var(--dy)) scale(1.3); opacity:0; }
+  }
+
+  /* 결과 화면 */
+  .result-score { text-align:center; font-size:52px; font-weight:800; color:var(--pink-deep); margin:8px 0; }
+  .result-rank { text-align:center; font-size:18px; font-weight:700; margin-bottom:4px; }
+  .result-msg { text-align:center; font-size:14px; color:#a17887; margin-bottom:20px; line-height:1.6; }
+  .gallery { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:18px 0 22px; }
+  .member-card {
+    background:linear-gradient(160deg,#fff, #fff5f7); border:2px solid var(--pink-soft);
+    border-radius:18px; padding:14px; font-size:13px;
+  }
+  .member-card.mastered { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,183,3,.25); }
+  .mc-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .mc-emoji { font-size:24px; }
+  .mc-name { font-weight:800; font-size:14px; }
+  .mc-liner { color:#8a5a6b; line-height:1.5; font-size:12px; }
+  .mc-stat { margin-top:8px; font-size:12px; font-weight:700; color:var(--pink-deep); }
+  .btn-row { display:flex; flex-direction:column; gap:10px; }
+
+  /* 도감 화면 */
+  .dex-card { margin-bottom:12px; }
+  .dex-episodes { margin-top:8px; font-size:12px; color:#8a5a6b; line-height:1.55; }
+  .dex-episodes b { color:var(--pink-deep); }
+  .back-btn { margin-bottom:14px; width:auto; padding:10px 20px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="floating-hearts" id="hearts"></div>
+<div id="app">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="screen-start">
+    <div class="card">
+      <div class="title-emoji">💛</div>
+      <h1>반말방 인물 퀴즈</h1>
+      <p class="subtitle">우리 방 3일간의 대화 속에서<br>에피소드의 주인공을 맞춰보세요!<br><b>총 40문제</b> · 방 사람이라면 다 맞출 수 있음 😎</p>
+      <div class="member-chips" id="start-chips"></div>
+      <button class="btn" onclick="startQuiz()">💘 퀴즈 시작하기</button>
+      <div style="height:10px"></div>
+      <button class="btn secondary" onclick="showDex()">📖 인물 도감 먼저 보기</button>
+    </div>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div class="screen" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="q-num">1 / 40</span><span id="q-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-pill" id="score-pill">💖 0점</span>
+      <span class="streak" id="streak"></span>
+    </div>
+    <div class="card">
+      <span class="q-type" id="q-type"></span>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+      <div class="explain" id="explain"></div>
+      <button class="btn next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 ➜</button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen" id="screen-result">
+    <div class="card">
+      <div class="title-emoji" id="result-emoji">💖</div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-rank" id="result-rank"></div>
+      <p class="result-msg" id="result-msg"></p>
+      <div class="gallery" id="result-gallery"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="restart()">🔁 다시 하기</button>
+        <button class="btn secondary" onclick="showDex()">📖 인물 도감 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 도감 화면 -->
+  <div class="screen" id="screen-dex">
+    <button class="btn secondary back-btn" onclick="goHome()">⬅ 홈으로</button>
+    <div id="dex-list"></div>
+  </div>
+
+</div>
+
+<script>
+const DATA = __QUIZ_DATA__;
+
+const TYPE_LABEL = { quote:'💬 실제 발언', episode:'🎬 에피소드', habit:'🔁 말버릇·습관', fact:'📌 TMI' };
+
+let order = [], current = 0, score = 0, streak = 0, locked = false;
+let perMember = {}; // name -> {total, correct}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+// 배경 하트
+(function(){
+  const box = document.getElementById('hearts');
+  const emo = ['💛','🩷','💖','🌸','✨'];
+  for(let i=0;i<14;i++){
+    const s = document.createElement('span');
+    s.textContent = emo[i%emo.length];
+    s.style.left = Math.random()*100+'vw';
+    s.style.animationDuration = (9+Math.random()*10)+'s';
+    s.style.animationDelay = (-Math.random()*12)+'s';
+    s.style.fontSize = (14+Math.random()*18)+'px';
+    box.appendChild(s);
+  }
+})();
+
+// 시작 화면 칩
+(function(){
+  document.getElementById('start-chips').innerHTML =
+    DATA.members.map(m=>`<span class="chip">${m.emoji} ${m.name.split(' ')[0]}</span>`).join('');
+})();
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startQuiz(){
+  order = shuffle(DATA.questions.map((q,i)=>i));
+  current = 0; score = 0; streak = 0;
+  perMember = {};
+  DATA.members.forEach(m=>perMember[m.name]={total:0,correct:0});
+  show('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  locked = false;
+  const q = DATA.questions[order[current]];
+  q._shuffled = shuffle(q.choices.map((c,i)=>({name:c, isAnswer:i===q.answer})));
+  document.getElementById('q-num').textContent = `${current+1} / ${order.length}`;
+  const pct = Math.round(current/order.length*100);
+  document.getElementById('q-pct').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('score-pill').textContent = `💖 ${score}점`;
+  document.getElementById('streak').textContent = streak>=2 ? `🔥 ${streak}연속!` : '';
+  document.getElementById('q-type').textContent = TYPE_LABEL[q.type] || q.type;
+  document.getElementById('question').textContent = q.question;
+  document.getElementById('explain').className = 'explain';
+  document.getElementById('next-btn').className = 'btn next-btn';
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+  q._shuffled.forEach((c)=>{
+    const b = document.createElement('button');
+    b.className = 'choice';
+    const mem = DATA.members.find(m=>m.name===c.name);
+    b.innerHTML = `<span style="font-size:20px">${mem?mem.emoji:'💛'}</span> ${c.name}`;
+    b.onclick = ()=>answer(b, c, q);
+    box.appendChild(b);
+  });
+}
+
+function answer(btn, choice, q){
+  if(locked) return;
+  locked = true;
+  const buttons = document.querySelectorAll('#choices .choice');
+  buttons.forEach(b=>b.disabled=true);
+  const stat = perMember[q.answerName]; stat.total++;
+  if(choice.isAnswer){
+    stat.correct++;
+    score += q.difficulty==='easy' ? 10 : 15;
+    streak++;
+    btn.classList.add('correct');
+    buttons.forEach(b=>{ if(b!==btn) b.classList.add('dim'); });
+    burstHearts(btn);
+  } else {
+    streak = 0;
+    btn.classList.add('wrong');
+    buttons.forEach(b=>{
+      const t = b.textContent.trim();
+      if(t.endsWith(q.answerName)) b.classList.add('correct'); else if(b!==btn) b.classList.add('dim');
+    });
+  }
+  document.getElementById('score-pill').textContent = `💖 ${score}점`;
+  document.getElementById('streak').textContent = streak>=2 ? `🔥 ${streak}연속!` : '';
+  const ex = document.getElementById('explain');
+  ex.innerHTML = (choice.isAnswer ? '💗 <b>정답!</b> ' : `💔 아쉬워요! 정답은 <b>${q.answerName}</b> `) + (q.explanation||'');
+  ex.classList.add('show');
+  document.getElementById('next-btn').classList.add('show');
+  document.getElementById('next-btn').textContent = current===order.length-1 ? '🎀 결과 보기' : '다음 문제 ➜';
+}
+
+function burstHearts(el){
+  const r = el.getBoundingClientRect();
+  for(let i=0;i<8;i++){
+    const h = document.createElement('div');
+    h.className = 'heart-burst';
+    h.textContent = ['💖','💛','🩷','✨'][i%4];
+    h.style.left = (r.left + r.width/2)+'px';
+    h.style.top = (r.top)+'px';
+    h.style.setProperty('--dx', (Math.random()*160-80)+'px');
+    h.style.setProperty('--dy', (-(60+Math.random()*120))+'px');
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(), 950);
+  }
+}
+
+function nextQuestion(){
+  current++;
+  if(current>=order.length){ showResult(); return; }
+  renderQuestion();
+}
+
+function rankOf(pct){
+  if(pct>=95) return ['👑','반말방 여신/남신급 통솔자','방의 모든 에피소드를 꿰고 있네요. 당신은 진짜 이 방 사람!'];
+  if(pct>=80) return ['💖','반말방 핵인싸','웬만한 썰은 다 알고 있어요. 보룸 상주러 인정!'];
+  if(pct>=60) return ['💛','반말방 활동왕','꽤 알고 있지만 놓친 에피소드도 있어요. 채팅 더 열심히 봅시다 ㅋㅋ'];
+  if(pct>=40) return ['🌸','반말방 눈팅러','대화를 조금만 더 열심히 보세요! 도감 읽고 재도전 ㄱㄱ'];
+  return ['🐣','반말방 뉴비','도감부터 정독하고 다시 도전해보세요!'];
+}
+
+function showResult(){
+  const total = order.length;
+  const correctCount = Object.values(perMember).reduce((a,s)=>a+s.correct,0);
+  const pct = Math.round(correctCount/total*100);
+  const [emoji, rank, msg] = rankOf(pct);
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-score').textContent = score+'점';
+  document.getElementById('result-rank').textContent = rank;
+  document.getElementById('result-msg').innerHTML = `${total}문제 중 <b>${correctCount}개</b> 정답 (${pct}%)<br>${msg}`;
+  document.getElementById('result-gallery').innerHTML = DATA.members.map(m=>{
+    const s = perMember[m.name];
+    const mastered = s.total>0 && s.correct===s.total;
+    return `<div class="member-card ${mastered?'mastered':''}">
+      <div class="mc-head"><span class="mc-emoji">${m.emoji}</span><span class="mc-name">${m.name}</span></div>
+      <div class="mc-liner">${m.oneLiner}</div>
+      <div class="mc-stat">${mastered?'🌟 마스터!':'💖 '+s.correct+'/'+s.total+' 정답'}</div>
+    </div>`;
+  }).join('');
+  show('screen-result');
+}
+
+function showDex(){
+  document.getElementById('dex-list').innerHTML = DATA.members.map(m=>`
+    <div class="card dex-card">
+      <div class="mc-head"><span class="mc-emoji">${m.emoji}</span><span class="mc-name">${m.name}</span></div>
+      <div class="mc-liner">${m.oneLiner}</div>
+      <div class="dex-episodes" style="margin-top:6px"><b>말버릇:</b> ${m.catchphrases.join(' · ')}</div>
+      <div class="dex-episodes"><b>특징:</b> ${m.traits.join(' / ')}</div>
+      <div class="dex-episodes"><b>에피소드:</b><br>${m.episodes.map(e=>'• <b>'+e.title+'</b> — '+e.summary).join('<br>')}</div>
+    </div>`).join('');
+  show('screen-dex');
+}
+
+function goHome(){ show('screen-start'); }
+function restart(){ startQuiz(); }
+</script>
+</body>
+</html>

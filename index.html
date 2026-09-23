@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>💛 반말방 인물 퀴즈 💛</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --pink:#ff8fab; --pink-deep:#fb6f92; --pink-soft:#ffc2d1; --pink-bg:#fff0f3;
+    --cream:#fff8f0; --brown:#5c4a4a; --gold:#ffb703;
+  }
+  body {
+    font-family:'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;
+    background:linear-gradient(160deg,#ffe5ec 0%,#fff0f3 45%,#fff8f0 100%);
+    min-height:100vh; color:var(--brown); overflow-x:hidden;
+    display:flex; justify-content:center;
+  }
+  #app { width:100%; max-width:480px; padding:20px 16px 60px; position:relative; z-index:2; }
+  .floating-hearts { position:fixed; inset:0; pointer-events:none; z-index:1; overflow:hidden; }
+  .floating-hearts span {
+    position:absolute; bottom:-40px; font-size:20px; opacity:.35;
+    animation:floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform:translateY(0) rotate(0deg); opacity:0; }
+    10% { opacity:.4; }
+    90% { opacity:.35; }
+    100% { transform:translateY(-110vh) rotate(30deg); opacity:0; }
+  }
+  .card {
+    background:rgba(255,255,255,.92); border-radius:28px; padding:28px 22px;
+    box-shadow:0 8px 32px rgba(251,111,146,.18), 0 2px 8px rgba(251,111,146,.10);
+    backdrop-filter:blur(6px);
+  }
+  .screen { display:none; animation:pop .35s ease; }
+  .screen.active { display:block; }
+  @keyframes pop { from { transform:scale(.96) translateY(8px); opacity:0; } to { transform:none; opacity:1; } }
+
+  /* 시작 화면 */
+  .title-emoji { font-size:56px; text-align:center; animation:beat 1.4s ease infinite; }
+  @keyframes beat { 0%,100%{transform:scale(1);} 12%{transform:scale(1.15);} 24%{transform:scale(1);} 36%{transform:scale(1.12);} 48%{transform:scale(1);} }
+  h1 { text-align:center; font-size:26px; margin:14px 0 6px; color:var(--pink-deep); letter-spacing:-.5px; }
+  .subtitle { text-align:center; font-size:14px; color:#a17887; line-height:1.6; margin-bottom:22px; }
+  .btn {
+    display:block; width:100%; border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--pink) 0%,var(--pink-deep) 100%);
+    color:#fff; font-size:18px; font-weight:700; padding:16px;
+    border-radius:999px; box-shadow:0 6px 18px rgba(251,111,146,.45);
+    transition:transform .12s ease, box-shadow .12s ease; font-family:inherit;
+  }
+  .btn:active { transform:scale(.96); box-shadow:0 3px 10px rgba(251,111,146,.4); }
+  .btn.secondary { background:#fff; color:var(--pink-deep); border:2px solid var(--pink-soft); box-shadow:none; }
+  .member-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:18px 0 24px; }
+  .chip {
+    background:#fff; border:1.5px solid var(--pink-soft); border-radius:999px;
+    padding:6px 12px; font-size:13px; color:#8a5a6b;
+  }
+
+  /* 퀴즈 화면 */
+  .progress-wrap { margin-bottom:16px; }
+  .progress-label { display:flex; justify-content:space-between; font-size:13px; color:#b0828f; margin-bottom:6px; font-weight:600; }
+  .progress-bar { height:12px; background:#ffe0e8; border-radius:999px; overflow:hidden; }
+  .progress-fill {
+    height:100%; width:0%; border-radius:999px;
+    background:linear-gradient(90deg,var(--pink-soft),var(--pink-deep));
+    transition:width .4s ease;
+  }
+  .score-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .score-pill { background:#fff; border-radius:999px; padding:6px 14px; font-size:14px; font-weight:700; color:var(--pink-deep); box-shadow:0 2px 8px rgba(251,111,146,.15); }
+  .streak { font-size:14px; color:var(--gold); font-weight:700; }
+  .q-type {
+    display:inline-block; font-size:12px; font-weight:700; padding:4px 12px;
+    border-radius:999px; background:var(--pink-bg); color:var(--pink-deep); margin-bottom:12px;
+  }
+  .question { font-size:17px; font-weight:700; line-height:1.65; margin-bottom:20px; word-break:keep-all; }
+  .choices { display:flex; flex-direction:column; gap:10px; }
+  .choice {
+    border:2px solid var(--pink-soft); background:#fff; border-radius:18px;
+    padding:14px 16px; font-size:15px; font-weight:600; color:var(--brown);
+    cursor:pointer; text-align:left; transition:all .15s ease; font-family:inherit;
+    display:flex; align-items:center; gap:10px;
+  }
+  .choice:hover { border-color:var(--pink); background:var(--pink-bg); }
+  .choice:disabled { cursor:default; }
+  .choice.correct { border-color:#6bcb77; background:#eafff0; color:#2f7d3b; }
+  .choice.wrong { border-color:#ff6b6b; background:#fff0f0; color:#c0392b; animation:shake .3s; }
+  .choice.dim { opacity:.45; }
+  @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+  .explain {
+    margin-top:16px; background:var(--pink-bg); border-radius:16px; padding:14px 16px;
+    font-size:14px; line-height:1.6; color:#8a5a6b; display:none;
+  }
+  .explain.show { display:block; animation:pop .3s ease; }
+  .next-btn { margin-top:16px; display:none; }
+  .next-btn.show { display:block; }
+  .heart-burst { position:fixed; font-size:26px; pointer-events:none; z-index:50; animation:burst .9s ease forwards; }
+  @keyframes burst {
+    0% { transform:translate(0,0) scale(.4); opacity:1; }
+    100% { transform:translate(var(--dx),var(--dy)) scale(1.3); opacity:0; }
+  }
+
+  /* 결과 화면 */
+  .result-score { text-align:center; font-size:52px; font-weight:800; color:var(--pink-deep); margin:8px 0; }
+  .result-rank { text-align:center; font-size:18px; font-weight:700; margin-bottom:4px; }
+  .result-msg { text-align:center; font-size:14px; color:#a17887; margin-bottom:20px; line-height:1.6; }
+  .gallery { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:18px 0 22px; }
+  .member-card {
+    background:linear-gradient(160deg,#fff, #fff5f7); border:2px solid var(--pink-soft);
+    border-radius:18px; padding:14px; font-size:13px;
+  }
+  .member-card.mastered { border-color:var(--gold); box-shadow:0 0 0 2px rgba(255,183,3,.25); }
+  .mc-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .mc-emoji { font-size:24px; }
+  .mc-name { font-weight:800; font-size:14px; }
+  .mc-liner { color:#8a5a6b; line-height:1.5; font-size:12px; }
+  .mc-stat { margin-top:8px; font-size:12px; font-weight:700; color:var(--pink-deep); }
+  .btn-row { display:flex; flex-direction:column; gap:10px; }
+
+  /* 도감 화면 */
+  .dex-card { margin-bottom:12px; }
+  .dex-episodes { margin-top:8px; font-size:12px; color:#8a5a6b; line-height:1.55; }
+  .dex-episodes b { color:var(--pink-deep); }
+  .back-btn { margin-bottom:14px; width:auto; padding:10px 20px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="floating-hearts" id="hearts"></div>
+<div id="app">
+
+  <!-- 시작 화면 -->
+  <div class="screen active" id="screen-start">
+    <div class="card">
+      <div class="title-emoji">💛</div>
+      <h1>반말방 인물 퀴즈</h1>
+      <p class="subtitle">우리 방 3일간의 대화 속에서<br>에피소드의 주인공을 맞춰보세요!<br><b>총 40문제</b> · 방 사람이라면 다 맞출 수 있음 😎</p>
+      <div class="member-chips" id="start-chips"></div>
+      <button class="btn" onclick="startQuiz()">💘 퀴즈 시작하기</button>
+      <div style="height:10px"></div>
+      <button class="btn secondary" onclick="showDex()">📖 인물 도감 먼저 보기</button>
+    </div>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div class="screen" id="screen-quiz">
+    <div class="progress-wrap">
+      <div class="progress-label"><span id="q-num">1 / 40</span><span id="q-pct">0%</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div class="score-row">
+      <span class="score-pill" id="score-pill">💖 0점</span>
+      <span class="streak" id="streak"></span>
+    </div>
+    <div class="card">
+      <span class="q-type" id="q-type"></span>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+      <div class="explain" id="explain"></div>
+      <button class="btn next-btn" id="next-btn" onclick="nextQuestion()">다음 문제 ➜</button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div class="screen" id="screen-result">
+    <div class="card">
+      <div class="title-emoji" id="result-emoji">💖</div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-rank" id="result-rank"></div>
+      <p class="result-msg" id="result-msg"></p>
+      <div class="gallery" id="result-gallery"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="restart()">🔁 다시 하기</button>
+        <button class="btn secondary" onclick="showDex()">📖 인물 도감 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 도감 화면 -->
+  <div class="screen" id="screen-dex">
+    <button class="btn secondary back-btn" onclick="goHome()">⬅ 홈으로</button>
+    <div id="dex-list"></div>
+  </div>
+
+</div>
+
+<script>
+const DATA = {
+ "members": [
+  {
+   "name": "냥냥 인천 여",
+   "emoji": "🐱",
+   "oneLiner": "오타 섞인 애교 폭발 말투로 방 분위기를 띄우는 인천 사는 춘식이 덕후, 보룸(보이스룸) 중독자",
+   "traits": [
+    "오타와 '~', '♡' 가 섞인 특유의 애교 말투 (마싯게따, 가즈앙, 기여워)",
+    "귀여운 것(춘식이, 아기, 포켓몬)에 진심인 귀여움 중독자",
+    "맛집·빵 얘기에 적극적으로 뛰어드는 먹보 기질"
+   ],
+   "catchphrases": [
+    "가즈앙 / 가주앙",
+    "마즘 / 마장 / 마저",
+    "기여워 / 귀엽당",
+    "마싯게따"
+   ],
+   "activeTime": "평일 오후 3~5시(퇴근 전후)와 밤 10시~자정에 가장 활발, 새벽 2~3시까지 보룸 켜고 버티는 올빼미",
+   "episodes": [
+    {
+     "title": "카톡 백업 갔다 온 '새여자' 드립",
+     "summary": "카톡 백업 때문에 잠깐 방을 나갔다 와야 한다며 멤버들을 멘션하고 허락(?)을 구한 뒤 다녀옴. 돌아와서는 '나 다시 들어와써 새여자야!'라며 신입인 척 연기했고, 이후에도 '나 새여자네 맞네'라며 새여자 드립을 계속 밈."
+    },
+    {
+     "title": "잉어킹 마라톤 참가 고백",
+     "summary": "마라톤 얘기가 나오자 예전에 잉어킹 마라톤에 참가해 그 소품(머리띠)을 쓰고 뛰었다고 고백. 다른 멤버가 산 귀여운 양말을 보고 '잉어킹보댜 저게 더 규ㅣ욥당'이라며 포켓몬 귀여움 배틀을 벌임."
+    },
+    {
+     "title": "대전 성심당 부수기 원정",
+     "summary": "성심당 케이크 얘기가 나오자 '퍼묵고시퍼'를 외치며 대전 원정을 제안. 시루가 너무 무겁다는 TMI와 함께 뚜벅이로 가서 빵을 한 바가지 사오겠다는 구체적인 계획까지 세움."
+    },
+    {
+     "title": "파이리빵 전자레인지 꿀팁",
+     "summary": "포켓몬빵 얘기에서 매운 파이리빵을 전자레인지에 돌려 먹으면 최고로 맛있다는 자기만의 꿀팁을 공유. 고오스 빵도 맛있다며 포켓몬빵 박사 면모를 보임."
+    }
+   ]
+  },
+  {
+   "name": "닭발 수원 남",
+   "emoji": "🍗",
+   "oneLiner": "벙주질에 진심인 수원 사는 인천토박이, 뭘 구해놓고 스스로 'ㅇㅋ없네'라고 자기자답하며 흐느적거리는 자학 개그의 달인",
+   "traits": [
+    "뭔가 같이 할 사람을 구해놓고 대답이 없으면 스스로 'ㅇㅋ없네'로 마무리치는 습관",
+    "상황마다 '샵검색: #해시태그'를 붙여 상황극하듯 말하는 습관",
+    "가발, 최저시급, 집없고 차없는 자학 개그를 즐기지만 실제로는 벙을 제일 많이 여는 인싸"
+   ],
+   "catchphrases": [
+    "ㅇㅋ없네",
+    "샵검색: #OOO",
+    "떼잉~",
+    "헊헊"
+   ],
+   "activeTime": "주로 평일 근무 시간대(오전 10시~오후 5시)에 몰래 폭풍 채팅 + 밤 11시~12시대 새벽 활동",
+   "episodes": [
+    {
+     "title": "나랑 폭죽보러 갈사람? ㅇㅋ없네",
+     "summary": "불꽃축제에 같이 갈 사람을 구한다며 제안했다가 3초 만에 대답이 없자 스스로 'ㅇㅋ없네'로 마무리치는 전매특허 패턴을 보여줬다. 이후 '나랑 결혼할사람?', '나랑 보쌈먹으러 갈사람?', '나랑 갠톡할 사람 있냐' 등 계속 같은 패턴으로 반복하며 방의 시그니처 개그가 됐다."
+    },
+    {
+     "title": "눈꽈리 돌리기 오토모드",
+     "summary": "예쁜 사람을 보면 눈알이 자동으로 돌아가는 '눈꽈리 돌리기' 기술을 오토모드로 쓴다고 고백했다. 산에서 일부러 냥이 앞에서 돌렸는데 바로 들켰다며 한강 벙 때 엠줴에게 눈꽈리 돌리기 강의를 해주겠다고 선언했다."
+    },
+    {
+     "title": "수원 곱창벙 벙주의 고군분투",
+     "summary": "범계 곱창벙을 친 벙주로서 내내 참여 인원을 모집했으나 '왜 수원벙에 사람이 안 붙을까'가 그날의 메인 주제가 될 정도로 사람이 안 모여 삐졌다. 결국 당일 저녁 가게가 매주 화요일무라는 걸 알고 급하게 수원 역전시장 황소대구막창으로 장소를 변경해 벙을 진행했고, 남자 4명이 7병을 마신 맨즈나잇이 됐다."
+    },
+    {
+     "title": "술 마시고 보룸 들어갔다가 흑역사 작성",
+     "summary": "곱창벙에서 2병 넘게 마시고 취한 채로 보룸(보이는 라디오)에 들어가 텐션이 올라 헛소리를 쏟아냈다. 다음 날 '어제 말한건 전부 잊어주소'라며 사과하고 술 마시고 보룸에 절대 안 들어가겠다고 다짐했다."
+    }
+   ]
+  },
+  {
+   "name": "씽씽 신도림 여",
+   "emoji": "🎤",
+   "oneLiner": "방의 공식 중계봇이자 커플 메이커, 보룸(보이스룸)에 진심인 신도림 맛집 박사 언니",
+   "traits": [
+    "보룸(보이스룸) 중독자 — 이틀 연속 방 열고 9시간 연속 접속을 '근무'라고 부름",
+    "우주♥닭발 커플 성사에 진심인 중계봇 겸 결혼식 사전예약자",
+    "맛집·음식 정보통 — 닭발/막걸리/로제떡볶이/쿠션까지 영역 불문 추천왕"
+   ],
+   "catchphrases": [
+    "ㅇㅋ없네",
+    "맛도리",
+    "에반디 / 에반데",
+    "가쥬아~"
+   ],
+   "activeTime": "평일 근무시간(오전 8시반~저녁 7시)에 틈틈이 상주 + 밤 10시부터 새벽 2~4시까지 보룸 타임에 폭발적으로 활동",
+   "episodes": [
+    {
+     "title": "우주닭발 커플 탄생의 산파",
+     "summary": "보룸에서 우주와 닭발의 가치관이 완전 잘 맞는다는 걸 발견하고 '떠오르는 뉴커플 우주닭발'이라 명명. 각방 쓰는 것도 좋아하는 둘을 두고 '거의 지금 당장 식올려도 잘살듯'이라며 본격 중계봇을 자처했다."
+    },
+    {
+     "title": "보룸 중독 주의사항 공지",
+     "summary": "이틀 연속 보룸을 여는 것도 모자라 입장자들에게 할 일을 다 끝내고 들어오라는 공지를 올림. 보룸 시작하면 잠을 늦게 자고, 보룸 들어가기 전에 꼭 씻어야 한다는 생활 밀착형 경고문을 남겼다."
+    },
+    {
+     "title": "한강 벙 헤메 논쟁",
+     "summary": "한강 피크닉 벙을 앞두고 '헤메(헤어·메이크업) 받고 가야 하나' 고민하며 오은영 쌤 머리를 하고 가자고 제안. 결국 '꾸미는 거랑 김밥이랑 둘 중 하나 포기해야 됨'이라는 명언을 남겼다."
+    },
+    {
+     "title": "방 전원 닮은꼴 총정리",
+     "summary": "멤버별 닮은꼴 이야기가 나오자 한 줄로 전원 정리를 해버림. 본인은 박초롱, 닭발은 도경완(후에 박보검으로 상향), 엠줴는 정유미, 밥만이는 최강창민 닮은 소 등으로 매칭했다."
+    }
+   ]
+  },
+  {
+   "name": "우주 은평 여",
+   "emoji": "🚀",
+   "oneLiner": "보드게임·마작·러닝에 진심인 은평의 에너자이저. 입만 열면 '에겐이야?' 하고, 이상형은 오직 박찬대 닮은 에겐남이다.",
+   "traits": [
+    "보드게임 쳐돌이 (크라켄/크툴루/티츄/하나비/마작/홀덤 다 섭렵, 벙 직접 영업함)",
+    "박찬대 덕후 (박찬대 닮은 에겐남이 유일한 이상형)",
+    "술·커피·내장 안 먹는 깔끔한 입맛 (우유러버)"
+   ],
+   "catchphrases": [
+    "에겐이야?",
+    "미쳐따",
+    "한입만...",
+    "ㄱㅁㄴ"
+   ],
+   "activeTime": "평일 근무시간(오전 9시~저녁 6시)에 옵챗으로 가장 활발하게 놀고, 저녁 9시~자정엔 보이스톡(보룸)에 출석, 아침 6~8시엔 'ㄱㅁㄴ'으로 등장",
+   "episodes": [
+    {
+     "title": "보겜벙 열정 영업 사건",
+     "summary": "목요일 보드게임 벙을 잡아놓고 닭발·유유·씽씽·뒹굴·밥만까지 전부 태그해 인원을 모았다. '보드게임 3시간이면 워밍업도 못 한다'며 진심을 보였고, 결국 24일 강남 보겜벙(코노 선행 12시, 보겜방 2시)까지 성사시켰다."
+    },
+    {
+     "title": "친구 도발에 긁혀 마라톤 10km 신청",
+     "summary": "태어나서 러닝을 한 번도 해본 적 없는데, 친구가 '5km는 걸어도 함ㅋㅋ'이라고 놀리는 바람에 긁혀서 10km로 신청했다. 두 달 전부터 헬스장 등록해서 뛰기 시작했고, 10/5 대회 전까지 컨디션 관리 때문에 벙도 안 나간다고 선언했다."
+    },
+    {
+     "title": "에스컬레이터 번따썰",
+     "summary": "에스컬레이터에서 어떤 남자가 떨어진 인형키링을 주워 올려놓는 걸 보고 '오 센스?' 하고 바로 따라가 번호를 땄다. 하지만 임자가 있어서 번호는 못 받았고, 인생 처음이자 마지막 번따가 됐다."
+    },
+    {
+     "title": "뒹굴이 근육 집착과 보이콧 사태",
+     "summary": "몸 좋은 뒹굴이의 근육이 너무 궁금해서 초면에 '내가 어디까지 실례해도 될까?'를 육성으로 박았다. 괜찮다길래 뱃살 만져도 되냐고 했다가 바로 컷당했고, 결국 뒹굴이가 방 보이콧을 선언하는 사태까지 갔다."
+    }
+   ]
+  },
+  {
+   "name": "늉니 가산 남",
+   "emoji": "🧞",
+   "oneLiner": "벙 열고, 사진 찍어주고, '캬' 한 방으로 마무리하는 방의 벙지니 총무 맏형",
+   "traits": [
+    "벙(오프라인 모임)을 부지런히 열고 참석 독려하는 추진왕",
+    "감탄사 '캬'를 하루에도 몇 번씩 쓰는 호탕한 말투",
+    "롤 무과금(무통) 유저라는 걸 자랑처럼 반복해서 말함"
+   ],
+   "catchphrases": [
+    "캬",
+    "사유:테란 / 사유:닭발 / 사유:닥박",
+    "벙지니~",
+    "무통신화 (롤 무과금)"
+   ],
+   "activeTime": "밤 22시~자정 무렵에 가장 활발, 아침 8~9시 출근길과 저녁 18~19시 퇴근길에도 꾸준히 출몰",
+   "episodes": [
+    {
+     "title": "닮은꼴 리스트 기록관",
+     "summary": "방에서 유행한 '멤버별 연예인 닮은꼴' 놀이를 늉니가 직접 받아적고 정리했다. 새 멤버가 추가될 때마다 리스트를 갱신해서 올리고, 중간에 복붙이 날아가자 '아 쒯 복붙사라졋다'며 진짜 아쉬워했다."
+    },
+    {
+     "title": "유코 방탈 사태와 '사유:테란'",
+     "summary": "유코가 방을 나가려 하자 늉니가 진지하게 이탈 사유를 캐물었다. '사유:테란' '사유:닭발' 같은 사유 시리즈를 만들어내고, 돌아오면 3인칭 한 번 하게 해주겠다며 회유했다."
+    },
+    {
+     "title": "곽튜브 닮은꼴 대충격 사건",
+     "summary": "전날 누가 늉니를 곽튜브 닮았다고 해서 '어이가없어서 대충격'을 받았다고 한다. 그런데 나이를 확인해보니 본인(87년생)이 곽튜브보다 형이라는 게 밝혀져 더 웃긴 상황이 됐다."
+    },
+    {
+     "title": "벙지니의 참석 매직",
+     "summary": "벙 참석 버튼만 누르면 어떻게든 가게 된다는 이론을 설파하며 스스로를 '벙지니'라 칭했다. 수원 곱창벙, 팬션벙, 민둥산벙 등 톡게시판 글 공유를 가장 많이 한 사람이다."
+    }
+   ]
+  },
+  {
+   "name": "라이언 강서 남",
+   "emoji": "🏀",
+   "oneLiner": "헬스장·농구·위스키를 사랑하는 강서 대표 헠헠이, 조카한테는 무장해제되는 조카바보 삼촌",
+   "traits": [
+    "운동 덕후 (헬스장 오운완 + 농구 + 덜덜이 마사지)",
+    "오타 폭발하는 장난꾸러기 말투",
+    "술은 좋아하지만 주량은 약한 위스키 애호가"
+   ],
+   "catchphrases": [
+    "헠헠",
+    "크 / 크으",
+    "~하삼 / 오삼 (예: 화이팅하삼, 마시러 오삼)",
+    "가즈아~"
+   ],
+   "activeTime": "아침 출근길 8시대 인사 후, 점심시간과 퇴근 후(18시~)에 간헐적 등장, 본격 활동은 밤 21시~새벽 1시대",
+   "episodes": [
+    {
+     "title": "공복 헬스 후 오마카세 벙 후기",
+     "summary": "강서 한강 벙에 다녀온 날, 점심 스시를 안 먹고(공복으로) 헬스장부터 갔다가 으질으질했다고 후기를 남김. 오마카세 사진도 찍었는데 호두가 더 잘 찍었다며, 음식 사진보다 술 사진에 진심이라고 고백함."
+    },
+    {
+     "title": "헬스장 눈 마주침 도망 사건",
+     "summary": "늦은 밤 헬스장에 혼자 있다가 운동하며 소리 내는 여자 회원을 보고 뒤돌아봤는데, 스트레칭하다 눈이 마주치자 상대가 가방 메고 도망쳤다는 에피소드. 본인은 못 볼 걸 본 표정으로 도망갔다며 미안해함."
+    },
+    {
+     "title": "보룸(보이스룸) 3연속 낚임",
+     "summary": "뉴비가 보룸에서 노래 부른다길래 낚여서 들어갔는데 정작 노래는 안 하고, 레드락 벙 낚임까지 이틀 동안 세 번이나 낚였다고 한탄함. 방에서 가장 크게 낚인 두 번이 전부 자기라고 셀프 인증."
+    },
+    {
+     "title": "십자인대 다친 농구 친구 병문안",
+     "summary": "농구하다 십자인대를 다친 친구 병문안을 다녀옴. 병원 위치를 설명하면서 버거킹 위에 있는 병원이라는 TMI를 흘려 방을 웃김."
+    }
+   ]
+  },
+  {
+   "name": "저당 수원 여",
+   "emoji": "🧋",
+   "oneLiner": "헠헠 웃으며 방을 휘젓는 수원의 청순(자칭) 장난꾸러기, 닥박이 괴롭히기와 샵검색이 취미인 활력소",
+   "traits": [
+    "리액션 부자: '헠헠', '기여오', '괴웃겨'로 시작해 ㅋㅋ를 한 줄 가득 채움",
+    "장난치고 놀리는 걸 좋아함 — 특히 같은 수원 사는 닥박이(닭발)가 주 타겟",
+    "겉으론 패기 넘치지만 보이스룸(보룸) 앞에선 식은땀 흘리는 쫄보"
+   ],
+   "catchphrases": [
+    "헠헠",
+    "기여오",
+    "맛도리",
+    "근까"
+   ],
+   "activeTime": "직장인 패턴 — 출근 직후 오전 9~11시에 가장 활발, 점심시간(12~14시)과 퇴근 후 밤 22~24시에도 등장 (새벽 1시 깜짝 출현 1회)",
+   "episodes": [
+    {
+     "title": "청순녀 컨셉 세뇌 선언",
+     "summary": "23일 벙개를 앞두고 '청순녀' 컨셉으로 밀고 가겠다며 멤버들을 세뇌시키겠다고 선언. 본인 닉네임과 합쳐 '청순저당', 줄여서 '청당'이라 자칭하며 3일 내내 컨셉을 고수했다."
+    },
+    {
+     "title": "권혁빈과 결혼해 1조 벌어오기 프로젝트",
+     "summary": "샵검색으로 권혁빈을 검색하다가 갑자기 '혁빈이랑 결혼하면 1조를 벌어오겠다'는 말도 안 되는 청혼 비즈니스를 시작. 그 돈으로는 남편이 아니라 방 애들이랑 여행을 가겠다고 해서 웃긴 상황."
+    },
+    {
+     "title": "남사친 취급한 전 남친, 하늘나라행",
+     "summary": "전 남친이 데이트 중에 핸드폰만 보고 친구랑 오래 통화하는 바람에 남사친으로밖에 안 보였다는 썰을 풀었다. 결국 '보내드렸다'며 쿨하게 정리했다고 고백."
+    },
+    {
+     "title": "보룸(보이스룸) 쫄보 인증",
+     "summary": "방 멤버들이 보이스룸을 열 때마다 극도로 부끄러워하며 듣기만 하겠다고 버텼다. '보룸' 두 글자만 봐도 식은땀이 난다며 스스로 쫄보임을 인정."
+    }
+   ]
+  },
+  {
+   "name": "엠줴 인천 여",
+   "emoji": "🐶",
+   "oneLiner": "동물병원 실습하랴 과제하랴 4시간 자는 수의대생, 그러면서도 한강 눈꽈리 스캔은 포기 못하는 에너지 넘치는 인천 언니",
+   "traits": [
+    "동물 얘기가 나오면 지식이 폭발하는 수의대 실습생",
+    "남자 얘기에 누구보다 적극적, 거절이 없는 여자",
+    "저혈압에 수면부족인데 운동은 꼭 하는 갓생 지망생"
+   ],
+   "catchphrases": [
+    "가주앙~",
+    "얍얍",
+    "괴웃김ㅋㅋㅋㅋ",
+    "떼잉"
+   ],
+   "activeTime": "주로 밤 21시~새벽 1시 사이에 가장 활발, 등교 시간대(아침 8~9시)와 오후 실습 쉬는 시간에도 자주 출몰",
+   "episodes": [
+    {
+     "title": "한강 눈꽈리 스캔 강습",
+     "summary": "새벽에 한강에서 이성 '눈꽈리 돌리기'를 하기로 하고, 경험자인 닭발에게 스캔 요령을 열정적으로 물어봄. 한번 돌리고 '한 3초 쉬어야하나'라며 텀까지 물어보는 디테일로 방을 폭소하게 만듦."
+    },
+    {
+     "title": "환자 추가에 수액도 못 맞은 날",
+     "summary": "저혈압이 심해져서 수액을 맞으러 갔는데 학교에 환자가 추가되는 바람에 수액도 못 맞고 다시 학교로 돌아감. '물 마실 시간을 주시든가...'라며 투덜대는 게 하이라이트."
+    },
+    {
+     "title": "말라뮤트 온다는 소식에 수의학 지식 폭발",
+     "summary": "학교에 말라뮤트 환자가 온다는 말에 '야호'라며 신났다가, 생긴 것과 다르게 허스키가 바보고 말라뮤트가 사납다는 반전 지식을 전문가처럼 풀어놓음."
+    },
+    {
+     "title": "파마 대신 클리닉, 머리 기르기 대장정",
+     "summary": "파마하러 갔다가 머리 길이가 애매해서 파마를 못 한다는 진단을 받고 클리닉만 받고 옴. 최소 3개월은 더 길러야 한대서 결국 단백질 파우더까지 챙겨먹으며 머리 기르기에 돌입함."
+    }
+   ]
+  },
+  {
+   "name": "꿀꿀 양천 여",
+   "emoji": "🏋️",
+   "oneLiner": "오타를 내도 귀여운 '~얌~댕' 어미의 종로 헬스 죽순이, 아재개그엔 혼자 빵터지는 방의 할마니",
+   "traits": [
+    "헬스에 진심인 헬창 (데드리프트 90kg 클라스)",
+    "하루종일 ㅋㅋㅋㅋ가 끊이지 않는 웃음 부자",
+    "오타 장인 ('진따로', '핶다' 등 전설의 오타 보유)"
+   ],
+   "catchphrases": [
+    "마쟈마쟈",
+    "떼잉",
+    "아웃겨(아웃교)",
+    "구치?/구랭"
+   ],
+   "activeTime": "평일 점심시간(13~14시)과 퇴근 후 밤 21시~자정 사이에 폭풍 채팅, 출근 전 아침(8~10시)에도 등장",
+   "episodes": [
+    {
+     "title": "프랑스에 운동복 챙겨갔다가 1도 안 함",
+     "summary": "프랑스 여행에 운동복이랑 운동화까지 바리바리 챙겨갔지만 정작 한 번도 운동하지 않고 돌아옴. 심지어 니스에서 신나게 놀다가 뉴스 화면에 찍힌 사실을 자백하며 나약한싸람 인증."
+    },
+    {
+     "title": "'찐따로' 오타 대참사",
+     "summary": "팔힘 자랑을 하다가 '진짜로'를 '찐따로'로 오타 내는 바람에 하루종일 찐따로 놀림받음. 본인은 '나 찐따로라고 안했쟈나'라며 억울해했지만 이미 방의 밈이 됨."
+    },
+    {
+     "title": "데드리프트 중량 인증 쇼",
+     "summary": "오운완 인증하며 데드리프트는 원래 90kg까지 든다고 밝히고, 세트별 중량(60×10/70×10/75×7/80×5/85×5)까지 줄줄 읊음. 반면 스쿼트는 원판 5kg씩 끼우고 절대 안 는다는 쪼렙 고백으로 반전 매력."
+    },
+    {
+     "title": "아재개그 독박 사건",
+     "summary": "방에 올라온 아재개그에 혼자 빵터져서 사무실에서 깔깔대며 웃다가, 알고 보니 59명 중 본인만 웃었다는 사실에 반성 선언. 회사에서도 아재개그하면 혼자 웃는다고 자백."
+    }
+   ]
+  },
+  {
+   "name": "호두 용인 남",
+   "emoji": "🌰",
+   "oneLiner": "우히히~ 벙은 내가 말아준다! 용인 수지에 사는 놀이공원 정령 겸 맛집 큐레이터 큰형",
+   "traits": [
+    "벙(오프라인 모임) 기획 도배꾼 — 롯월벙, 에버랜드벙, 곱창벙, 갈비벙까지 톡게시판 일정을 직접 올리고 사람 모으는 방의 행사반장",
+    "귀여운 웃음소리 장인 — '우히히', '음하하하', '컄컄' 같은 특유의 웃음을 달고 다님",
+    "벙에서 짝수 맞추기에 진심인 밸런스 장인"
+   ],
+   "catchphrases": [
+    "우히히",
+    "음하하하",
+    "헠헠",
+    "나이쨔"
+   ],
+   "activeTime": "아침 출근 시간대(7~9시)와 점심~오후 근무 중 틈틈이 활발, 벙 있는 날은 저녁~밤까지",
+   "episodes": [
+    {
+     "title": "연차 내고 간 롯데월드 벙, 아틀란티스 1등 당첨",
+     "summary": "9/21 연차를 내고 직접 기획한 롯데월드 벙을 진행했다. 아틀란티스 1등으로 타고 자이로·스윙까지 도전했지만 나이를 실감하며 헠헠거렸다. 끝나고 동구와 소곱창까지 궈먹는 완벽한 하루를 보냈다."
+    },
+    {
+     "title": "수원 곱창벙, 벙 장소가 문 닫혀버린 사건",
+     "summary": "9/22 수원 곱창벙을 주최했는데 정작 벙 장소 가게가 문이 닫혀 있었다. 당황하지 않고 황소로 이동해 소곱창 3인분에 곱전 중짜리를 주문하며 자리를 잡았고, 인당 2병 넘게 마시는 화끈한 벙이 됐다."
+    },
+    {
+     "title": "놀이공원 정령의 에버랜드벙 기획과 짝수 집착",
+     "summary": "롯월벙 다음날 바로 10/5 에버랜드벙을 기획해 톡게시판에 '놀이공원 정령이 말아주는 에버랜드벙' 일정을 올렸다. 참석자 짝수 맞추기에 진심이라 '짝수 어케든 맞추겟음'을 연발하고, 결국 11월 벙까지 이어지며 두 탕을 예고했다."
+    },
+    {
+     "title": "인삼밭 도둑과 할부지들의 샷건전 썰",
+     "summary": "스마트팜 이야기가 나오자 집안 농사 썰을 풀었다. 할아버지의 인삼밭이 전문 인삼도둑에게 6년근을 쌔비는 바람에 접었고, 2011년에는 할아버지들끼리 샷건전(?) 직전까지 갔다가 할머니들이 '밥 안 해줄 거야'로 말려 겨우 살았다는 시골 집안 대서사시를 공개했다."
+    }
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "\"나 카톡 백업 때무네 잠깐 나갔다와두될깡~~?????????????????????\"라며 나갔다 와서 \"나 다시 들어와써 새여자야!\"라고 신입인 척한 사람은?",
+   "choices": [
+    "냥냥 인천 여",
+    "엠줴 인천 여",
+    "꿀꿀 양천 여",
+    "씽씽 신도림 여"
+   ],
+   "answer": 0,
+   "answerName": "냥냥 인천 여",
+   "explanation": "카톡 백업 때문에 잠시 방을 나갔다 온 뒤 '새여자' 드립을 계속 친 사람"
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "\"나 잉어킹 마라톤 했을때 그거 쓰구햇는뎅\" — 잉어킹 마라톤에 소품까지 쓰고 참가했다고 고백한 포켓몬 덕후는?",
+   "choices": [
+    "냥냥 인천 여",
+    "우주 은평 여",
+    "꿀꿀 양천 여",
+    "호두 용인 남"
+   ],
+   "answer": 0,
+   "answerName": "냥냥 인천 여",
+   "explanation": "포켓몬빵 파이리빵 전자레인지 꿀팁도 공유한 사람"
+  },
+  {
+   "type": "fact",
+   "difficulty": "medium",
+   "question": "\"대전 성심당 부신다아\", \"뚜벅이로 가서 사와야디\" — 성심당 빵을 위해 대전 뚜벅이 원정을 계획한 사람은?",
+   "choices": [
+    "냥냥 인천 여",
+    "꿀꿀 양천 여",
+    "씽씽 신도림 여",
+    "엠줴 인천 여"
+   ],
+   "answer": 0,
+   "answerName": "냥냥 인천 여",
+   "explanation": "성심당 시루가 너무 무겁다는 TMI까지 아는 빵 덕후"
+  },
+  {
+   "type": "habit",
+   "difficulty": "medium",
+   "question": "동의할 때 \"마즘\", \"마장 ~~~\"을 쓰는 독특한 말버릇의 소유자는?",
+   "choices": [
+    "냥냥 인천 여",
+    "씽씽 신도림 여",
+    "엠줴 인천 여",
+    "꿀꿀 양천 여"
+   ],
+   "answer": 0,
+   "answerName": "냥냥 인천 여",
+   "explanation": "'맞아/맞지'를 매번 다르게 오타 내는 사람"
+  },
+  {
+   "type": "habit",
+   "difficulty": "easy",
+   "question": "'나랑 결혼할사람?'이라고 물어놓고 대답이 없자 불과 몇 초 만에 스스로 'ㅇㅋ없네'라며 자기자답으로 마무리한 사람은?",
+   "choices": [
+    "닭발 수원 남",
+    "늉니 가산 남",
+    "호두 용인 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "닭발 수원 남",
+   "explanation": "뭔가 같이 할 사람을 구하고 'ㅇㅋ없네'로 스스로 마무리치는 게 이 사람의 전매특허 패턴. '나랑 불꽃축제 보러 갈사람? ㅇㅋ없네', '나랑 보쌈먹으러 갈사람? ㅇㅋ없네' 등 3일 내내 10번 넘게 반복했다."
+  },
+  {
+   "type": "quote",
+   "difficulty": "medium",
+   "question": "\"내 눈 돌아가는 각도 잘봐라 보고배워라 숙련자의 눈알굴리기\" — 예쁜 사람 보면 눈이 오토모드로 돌아간다며 한강 벙에서 '눈꽈리 돌리기 강의'를 예고한 사람은?",
+   "choices": [
+    "닭발 수원 남",
+    "라이언 강서 남",
+    "우주 은평 여",
+    "호두 용인 남"
+   ],
+   "answer": 0,
+   "answerName": "닭발 수원 남",
+   "explanation": "산에서 일부러 냥이 앞에서 눈을 돌렸다가 바로 들켰다고 자백했고, '텀이 어딨냐 자동이다 오토모드'라며 스스로 숙련자임을 인정했다."
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "\"매일 가발쓰느라 30분씩 아침에 일찍인나는건데\" — 탈모 고민을 자학 개그로 승화시킨 이 발언을 한 사람은?",
+   "choices": [
+    "닭발 수원 남",
+    "늉니 가산 남",
+    "호두 용인 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "닭발 수원 남",
+   "explanation": "벙 약속에 늦을 뻔한 이유가 가발 때문이라고 고백했고, 다른 멤버에게도 '나처럼 가발이라도 써야해'라고 드립을 쳤던 사람."
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "직접 친 수원 곱창벙에 사람이 안 모이자 '오늘의 메인 주제는 왜 수원벙에 사람이 안 붙을까 입니다'라며 삐졌고, 당일 가게가 매주 화요일무라는 걸 알고 급하게 역전시장 막창집으로 장소를 바꿔 결국 남자 4명이 7병을 마신 벙을 완성시킨 벙주는?",
+   "choices": [
+    "닭발 수원 남",
+    "호두 용인 남",
+    "늉니 가산 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "닭발 수원 남",
+   "explanation": "수원에 살면서 곱창벙·보드게임벙·레드락벙 등 벙을 직접 열고 다니는 이 방의 대표 벙주다."
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "'주의사항:보룸들오기 전에 꼭씻기 / 아님 못씻어' — 보룸 입장 전 샤워를 강제하는 이 중독자는?",
+   "choices": [
+    "씽씽 신도림 여",
+    "냥냥 인천 여",
+    "우주 은평 여",
+    "엠줴 인천 여"
+   ],
+   "answer": 0,
+   "answerName": "씽씽 신도림 여",
+   "explanation": "이틀 연속 보룸을 열고, 보룸 9시간 접속을 '근무했네'라고 부른 보룸중독자 선언 당사자"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "'떠오르는 뉴커플 / 우주닭발 / 밀어준다 내가' — 우주와 닭발 커플을 가장 먼저 발굴하고 열심히 미는 사람은?",
+   "choices": [
+    "씽씽 신도림 여",
+    "냥냥 인천 여",
+    "저당 수원 여",
+    "꿀꿀 양천 여"
+   ],
+   "answer": 0,
+   "answerName": "씽씽 신도림 여",
+   "explanation": "닭발을 '닥박이'라고 부르는 사람. '안대 우주는 닥박이꺼야 넘보지들마'라며 커플 지킴이도 함"
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "'23일 누나홀닭 벙 6명 바깥자리로 예약완룡♡' — 23일 닭발집 벙을 직접 예약하고 '우리자리 맡앗다~~~~ 야호'라며 기뻐한 벙 담당자는?",
+   "choices": [
+    "씽씽 신도림 여",
+    "호두 용인 남",
+    "닭발 수원 남",
+    "우주 은평 여"
+   ],
+   "answer": 0,
+   "answerName": "씽씽 신도림 여",
+   "explanation": "바깥자리 찜꽁하려고 미리 7시 예약까지 해둔 추진력 담당"
+  },
+  {
+   "type": "fact",
+   "difficulty": "medium",
+   "question": "'진짜 내 결혼식에 성시경이 축가해주먄 소원이없겟다 / 신부혼절각' — 결혼식 축가 1순위가 성시경인 사람은?",
+   "choices": [
+    "씽씽 신도림 여",
+    "냥냥 인천 여",
+    "우주 은평 여",
+    "저당 수원 여"
+   ],
+   "answer": 0,
+   "answerName": "씽씽 신도림 여",
+   "explanation": "음색파 공기반소리반 애호가. 보룸에서 노래 부르고 혼코노까지 가는 노래 사랑 멤버"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "'보드게임을 3시간만한다고? 너 에겐이야? 3시간이면 워밍업도못하겠다' — 보겜벙 시간을 두고 이렇게 발언한 사람은?",
+   "choices": [
+    "우주 은평 여",
+    "늉니 가산 남",
+    "호두 용인 남",
+    "씽씽 신도림 여"
+   ],
+   "answer": 0,
+   "answerName": "우주 은평 여",
+   "explanation": "방에서 보드게임 벙을 직접 열고 영업까지 하는 보드게임 쳐돌이. 크라켄·크툴루·티츄·마작을 줄줄 꿰는 사람"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "'우 윳 빛 깔 박 찬 대'라고 초성을 쪼개 외치며 '통장을 바칠 준비가 됐다'고 한 사람은?",
+   "choices": [
+    "우주 은평 여",
+    "저당 수원 여",
+    "씽씽 신도림 여",
+    "냥냥 인천 여"
+   ],
+   "answer": 0,
+   "answerName": "우주 은평 여",
+   "explanation": "이상형이 '담배 안 피고 문신 없는 박찬대st 에겐남'이라고 수차례 밝힌 방의 박찬대 덕후"
+  },
+  {
+   "type": "quote",
+   "difficulty": "medium",
+   "question": "'서울역 4번출구 위에서 8번째 계단이 내 나와바리야. 와서 잔돈 좀 주고가~' — 구걸 드립을 친 사람은?",
+   "choices": [
+    "우주 은평 여",
+    "닭발 수원 남",
+    "늉니 가산 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "우주 은평 여",
+   "explanation": "'돈만 주면 다 합니다', '5만원이면 공주님안기도 가능'이라며 돈 드립을 이어간 사람"
+  },
+  {
+   "type": "fact",
+   "difficulty": "medium",
+   "question": "집에 자동으로 패를 섞어주는 마작 전탁이 있고, '중국 꽃마작, 일본 리치마작, 한국식 마작 맞춤형 교육 가능'이라고 자랑한 사람은?",
+   "choices": [
+    "우주 은평 여",
+    "호두 용인 남",
+    "닭발 수원 남",
+    "늉니 가산 남"
+   ],
+   "answer": 0,
+   "answerName": "우주 은평 여",
+   "explanation": "밤샘마작도 치고, 홀덤(2BB·오마하)까지 섭렵한 방의 대표 게임 고수"
+  },
+  {
+   "type": "episode",
+   "difficulty": "easy",
+   "question": "방을 나가려는 멤버에게 '진지하게 사유 무엇', '사유:테란'이라며 이탈 사유를 캐묻고, '돌아올때 1번 3인칭 하게해줄게'라며 회유한 사람은?",
+   "choices": [
+    "늉니 가산 남",
+    "닭발 수원 남",
+    "라이언 강서 남",
+    "호두 용인 남"
+   ],
+   "answer": 0,
+   "answerName": "늉니 가산 남",
+   "explanation": "'사유:닭발', '사유:닥박'으로 이어지는 사유 시리즈의 제조기"
+  },
+  {
+   "type": "fact",
+   "difficulty": "medium",
+   "question": "곽튜브 닮았다는 말에 대충격받았는데, 나이를 확인해보니 '내가 형이네 곽튭보다'라며 반박한 사람은?",
+   "choices": [
+    "늉니 가산 남",
+    "호두 용인 남",
+    "닭발 수원 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "늉니 가산 남",
+   "explanation": "방 나이 서열 '늉니 > 씽씽 > 우주'의 맏형"
+  },
+  {
+   "type": "quote",
+   "difficulty": "medium",
+   "question": "'아 실버좀갈라는데 쉽지않노'라더니 결국 '추카해라 실버5 / 왔다 / 캬'로 자축한 롤 무과금(무통) 유저는?",
+   "choices": [
+    "늉니 가산 남",
+    "닭발 수원 남",
+    "라이언 강서 남",
+    "호두 용인 남"
+   ],
+   "answer": 0,
+   "answerName": "늉니 가산 남",
+   "explanation": "'난 무통이지', '무통신화'를 입에 달고 사는 사람"
+  },
+  {
+   "type": "episode",
+   "difficulty": "easy",
+   "question": "수원 곱창벙에 가려고 '택시보다 더빠른거탐 / 케텍스 / 벙은케텍스지'라며 진짜 KTX 탑승 인증까지 한 사람은?",
+   "choices": [
+    "늉니 가산 남",
+    "호두 용인 남",
+    "닭발 수원 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "늉니 가산 남",
+   "explanation": "벙 하나에 KTX를 타는 열정, 그날 '수원 마지막 파이널 콜~'을 외친 주최자"
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "'이틀동안 세번 낚임'이라며 뉴비 노래방 보룸 낚시, 레드락 벙 낚시까지 연달아 당했다고 한탄한 사람은?",
+   "choices": [
+    "라이언 강서 남",
+    "늉니 가산 남",
+    "닭발 수원 남",
+    "우주 은평 여"
+   ],
+   "answer": 0,
+   "answerName": "라이언 강서 남",
+   "explanation": "방에서 가장 크게 낚인 두 번이 전부 자기라고 직접 인증함"
+  },
+  {
+   "type": "fact",
+   "difficulty": "easy",
+   "question": "키 얘기가 나오자 '나도 승산잇네 166으로써'라며 자기 키가 166cm라고 직접 밝힌 사람은?",
+   "choices": [
+    "라이언 강서 남",
+    "닭발 수원 남",
+    "늉니 가산 남",
+    "호두 용인 남"
+   ],
+   "answer": 0,
+   "answerName": "라이언 강서 남",
+   "explanation": "166cm에 몸무게 90kg, 저당이는 78kg 정도로 봤다는 에피소드도 같이 나옴"
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "농구하다 십자인대 다친 친구 병문안을 다녀와서 '버거킹 위에 병원이야.. ㅋㅋ'라고 병원 위치를 설명한 사람은?",
+   "choices": [
+    "라이언 강서 남",
+    "닭발 수원 남",
+    "늉니 가산 남",
+    "호두 용인 남"
+   ],
+   "answer": 0,
+   "answerName": "라이언 강서 남",
+   "explanation": "평소 농구를 자주 하고 농구 친구들 얘기를 많이 하는 멤버"
+  },
+  {
+   "type": "fact",
+   "difficulty": "medium",
+   "question": "작년 10월생 여자 조카가 애착인형 안고 다시 잔다는 영상을 받고 '완전 ㅠ 조카바보됨'이라며 인형을 사줘야 하나 고민한 삼촌은?",
+   "choices": [
+    "라이언 강서 남",
+    "호두 용인 남",
+    "늉니 가산 남",
+    "닭발 수원 남"
+   ],
+   "answer": 0,
+   "answerName": "라이언 강서 남",
+   "explanation": "남동생이 있고 조카가 자기 어릴 때랑 닮았다고 자랑하는 조카바보"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "'나 청순 그잡채 / 청순으로 밀고 간다 / 너네들 세뇌 시킬거야' — 벙개를 앞두고 청순 컨셉으로 멤버들을 세뇌하겠다고 선언한 사람은?",
+   "choices": [
+    "저당 수원 여",
+    "씽씽 신도림 여",
+    "꿀꿀 양천 여",
+    "엠줴 인천 여"
+   ],
+   "answer": 0,
+   "answerName": "저당 수원 여",
+   "explanation": "본인 닉네임과 합쳐 '청순저당(청당)'이라 자칭하며 3일 내내 청순 컨셉을 밀었다"
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "'혁빈스랑 결혼시켜주면 1조 벌어온다'며 권혁빈과의 결혼으로 1조를 벌어 방 애들과 여행을 가겠다는 계획을 세운 사람은?",
+   "choices": [
+    "저당 수원 여",
+    "우주 은평 여",
+    "씽씽 신도림 여",
+    "냥냥 인천 여"
+   ],
+   "answer": 0,
+   "answerName": "저당 수원 여",
+   "explanation": "샵검색으로 권혁빈을 검색하다 시작된 말도 안 되는 청혼 비즈니스, 9월 22일에도 '권혁빈이랑 결혼시켜봐'로 재등장"
+  },
+  {
+   "type": "habit",
+   "difficulty": "medium",
+   "question": "'보룸 이 두단어만 봐도 식은짬 나'라고 할 정도로 보이스룸(보룸)이 쫄려서 '듣기만' 하러 가겠다는 멤버는?",
+   "choices": [
+    "저당 수원 여",
+    "냥냥 인천 여",
+    "엠줴 인천 여",
+    "꿀꿀 양천 여"
+   ],
+   "answer": 0,
+   "answerName": "저당 수원 여",
+   "explanation": "채팅에선 제일 시끄럽지만 보룸만 열리면 '나 쫄보야..', '뷰끄러버서..' 하며 듣기 전용으로 전향"
+  },
+  {
+   "type": "fact",
+   "difficulty": "easy",
+   "question": "'나의 점심은 거의 라떼라능 / 안그럼 졸려 / 입이라도 움직여야 안졸려 ㅜ' — 점심을 라떼로 때운다는 직장인은?",
+   "choices": [
+    "저당 수원 여",
+    "꿀꿀 양천 여",
+    "우주 은평 여",
+    "씽씽 신도림 여"
+   ],
+   "answer": 0,
+   "answerName": "저당 수원 여",
+   "explanation": "출근 8시반, 출근길 카톡이 일상인 수원 직장인. 커피에 대해선 '나한테 물어봐줘 내가 다 말해줄게'라 할 정도로 자부심 있음"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "\"발아 눈꽈리 잘 돌리는법 알려주라 / 스캔 빠르고 정확하게 하는 법 / 한 3초 쉬어야하나\" — 한강에서 이성 스캔하는 법을 닭발에게 강습받은 이 멤버는?",
+   "choices": [
+    "엠줴 인천 여",
+    "냥냥 인천 여",
+    "우주 은평 여",
+    "저당 수원 여"
+   ],
+   "answer": 0,
+   "answerName": "엠줴 인천 여",
+   "explanation": "방에서 '난 거절안함'을 외치며 누구보다 적극적으로 한강 눈꽈리 돌리기를 계획한 멤버"
+  },
+  {
+   "type": "episode",
+   "difficulty": "easy",
+   "question": "저혈압으로 수액을 맞으러 갔는데 학교에 환자가 추가돼서 수액도 못 맞고 다시 돌아가며 \"물 마실 시간을 주시든가...\"라고 한탄한 사람은?",
+   "choices": [
+    "엠줴 인천 여",
+    "냥냥 인천 여",
+    "꿀꿀 양천 여",
+    "우주 은평 여"
+   ],
+   "answer": 0,
+   "answerName": "엠줴 인천 여",
+   "explanation": "저혈압인데 피검사는 맨날 정상이고, 물 많이 마시고 짜게 먹으라는 소리를 들은 유일한 멤버"
+  },
+  {
+   "type": "fact",
+   "difficulty": "easy",
+   "question": "\"사실 허스키가 바보 멍청이고 말라뮤트가 사납다. 생긴거랑 다른 애들임\"이라며 견종 지식을 뽐낸 이 사람의 정체는? (힌트: 비글한테 팔 긁힌 적 있음)",
+   "choices": [
+    "엠줴 인천 여",
+    "냥냥 인천 여",
+    "라이언 강서 남",
+    "우주 은평 여"
+   ],
+   "answer": 0,
+   "answerName": "엠줴 인천 여",
+   "explanation": "학교에서 말라뮤트, 비글, 기니피그 같은 동물 환자를 돌보는 실습을 하는 멤버"
+  },
+  {
+   "type": "quote",
+   "difficulty": "medium",
+   "question": "\"뭐 바르면 에너지가 나는 젤이 있나 했네\" — 에너지젤을 바르는 젤로 착각해서 자폭한 이 멤버는?",
+   "choices": [
+    "엠줴 인천 여",
+    "우주 은평 여",
+    "냥냥 인천 여",
+    "꿀꿀 양천 여"
+   ],
+   "answer": 0,
+   "answerName": "엠줴 인천 여",
+   "explanation": "텐션 높고 오타 많은 이 멤버의 순박한 오해가 터진 순간"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "\"나 원래 데드는 90까지는 들어!\" — 데드리프트 중량과 세트 구성(60×10/70×10/75×7...)까지 줄줄 읊은 이 멤버는?",
+   "choices": [
+    "꿀꿀 양천 여",
+    "우주 은평 여",
+    "엠줴 인천 여",
+    "저당 수원 여"
+   ],
+   "answer": 0,
+   "answerName": "꿀꿀 양천 여",
+   "explanation": "스쿼트는 원판 5kg씩 끼우고 절대 안 는다는 '쪼렙' 고백까지 세트로 한 헬스 덕후"
+  },
+  {
+   "type": "habit",
+   "difficulty": "medium",
+   "question": "채팅에서 '진짜로'를 '찐따로'로 오타 내는 바람에 하루종일 찐따로 놀림받은 멤버는?",
+   "choices": [
+    "꿀꿀 양천 여",
+    "냥냥 인천 여",
+    "엠줴 인천 여",
+    "저당 수원 여"
+   ],
+   "answer": 0,
+   "answerName": "꿀꿀 양천 여",
+   "explanation": "오타 직후 '헐 뭐야 나 찐따로라고 안했쟈나'라고 해명했지만 소용없었음. '핶다' 같은 전설급 오타도 보유"
+  },
+  {
+   "type": "quote",
+   "difficulty": "medium",
+   "question": "\"와 진짜 59명중에 나만 웃겼구낭 반성할게 얘들아\" — 방에 올라온 아재개그에 59명 중 혼자 빵터진 멤버는?",
+   "choices": [
+    "꿀꿀 양천 여",
+    "늉니 가산 남",
+    "닭발 수원 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "꿀꿀 양천 여",
+   "explanation": "사무실에서 혼자 깔깔거리며 웃었다고 자백한 아재개그 애호가. 회사에서도 아재개그에 혼자 웃는다고 함"
+  },
+  {
+   "type": "fact",
+   "difficulty": "medium",
+   "question": "접촉사고를 냈는데 하필 상대 차가 렉서스였다며 \"걸레로 닦으면 5초면 닦일 정도였는대 보험료가 올라간게\"라고 한탄한 멤버는?",
+   "choices": [
+    "꿀꿀 양천 여",
+    "닭발 수원 남",
+    "늉니 가산 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "꿀꿀 양천 여",
+   "explanation": "'이방에 렉서스 끄는 친구 있으면 마주치지 말자'는 후속 발언까지 남긴 렉서스 사고의 주인공"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "연차 내고 간 롯데월드 벙에서 \"아틀란티스 1등 당첨\"이라고 외친 사람은?",
+   "choices": [
+    "호두 용인 남",
+    "늉니 가산 남",
+    "닭발 수원 남",
+    "라이언 강서 남"
+   ],
+   "answer": 0,
+   "answerName": "호두 용인 남",
+   "explanation": "이 벙을 직접 기획하고 '놀이공원 정령'이라 불릴 만큼 놀이공원 벙을 도배하는 사람"
+  },
+  {
+   "type": "quote",
+   "difficulty": "easy",
+   "question": "\"우리집소가 야간에 탈출해서 차때림\" 이라며 집안 동영상까지 공개한 사람은?",
+   "choices": [
+    "호두 용인 남",
+    "늉니 가산 남",
+    "라이언 강서 남",
+    "닭발 수원 남"
+   ],
+   "answer": 0,
+   "answerName": "호두 용인 남",
+   "explanation": "포천 영북면 소 키우는 농장 집안 출신이라고 밝힌 멤버"
+  },
+  {
+   "type": "habit",
+   "difficulty": "easy",
+   "question": "\"우히히\", \"음하하하\", \"컄컄\" 같은 특유의 귀여운 웃음소리를 하루에도 몇 번씩 쓰는 멤버는?",
+   "choices": [
+    "호두 용인 남",
+    "냥냥 인천 여",
+    "엠줴 인천 여",
+    "꿀꿀 양천 여"
+   ],
+   "answer": 0,
+   "answerName": "호두 용인 남",
+   "explanation": "'우히히'만 3일 동안 13번 넘게 썼고, 우히히 하면 히히가 키알(훼이크)일까 고민까지 한 사람"
+  },
+  {
+   "type": "episode",
+   "difficulty": "medium",
+   "question": "\"11년도 레데리 할부지끼리 샷건전 할뻔한적잇음\" — 수렵면허에 산탄총까지 있던 시골 집안 대서사시를 푼 사람은?",
+   "choices": [
+    "호두 용인 남",
+    "늉니 가산 남",
+    "라이언 강서 남",
+    "닭발 수원 남"
+   ],
+   "answer": 0,
+   "answerName": "호두 용인 남",
+   "explanation": "할아버지 인삼밭이 인삼도둑 때문에 망했다고 한 멤버"
+  }
+ ]
+};
+
+const TYPE_LABEL = { quote:'💬 실제 발언', episode:'🎬 에피소드', habit:'🔁 말버릇·습관', fact:'📌 TMI' };
+
+let order = [], current = 0, score = 0, streak = 0, locked = false;
+let perMember = {}; // name -> {total, correct}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+// 배경 하트
+(function(){
+  const box = document.getElementById('hearts');
+  const emo = ['💛','🩷','💖','🌸','✨'];
+  for(let i=0;i<14;i++){
+    const s = document.createElement('span');
+    s.textContent = emo[i%emo.length];
+    s.style.left = Math.random()*100+'vw';
+    s.style.animationDuration = (9+Math.random()*10)+'s';
+    s.style.animationDelay = (-Math.random()*12)+'s';
+    s.style.fontSize = (14+Math.random()*18)+'px';
+    box.appendChild(s);
+  }
+})();
+
+// 시작 화면 칩
+(function(){
+  document.getElementById('start-chips').innerHTML =
+    DATA.members.map(m=>`<span class="chip">${m.emoji} ${m.name.split(' ')[0]}</span>`).join('');
+})();
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startQuiz(){
+  order = shuffle(DATA.questions.map((q,i)=>i));
+  current = 0; score = 0; streak = 0;
+  perMember = {};
+  DATA.members.forEach(m=>perMember[m.name]={total:0,correct:0});
+  show('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  locked = false;
+  const q = DATA.questions[order[current]];
+  q._shuffled = shuffle(q.choices.map((c,i)=>({name:c, isAnswer:i===q.answer})));
+  document.getElementById('q-num').textContent = `${current+1} / ${order.length}`;
+  const pct = Math.round(current/order.length*100);
+  document.getElementById('q-pct').textContent = pct+'%';
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('score-pill').textContent = `💖 ${score}점`;
+  document.getElementById('streak').textContent = streak>=2 ? `🔥 ${streak}연속!` : '';
+  document.getElementById('q-type').textContent = TYPE_LABEL[q.type] || q.type;
+  document.getElementById('question').textContent = q.question;
+  document.getElementById('explain').className = 'explain';
+  document.getElementById('next-btn').className = 'btn next-btn';
+  const box = document.getElementById('choices');
+  box.innerHTML = '';
+  q._shuffled.forEach((c)=>{
+    const b = document.createElement('button');
+    b.className = 'choice';
+    const mem = DATA.members.find(m=>m.name===c.name);
+    b.innerHTML = `<span style="font-size:20px">${mem?mem.emoji:'💛'}</span> ${c.name}`;
+    b.onclick = ()=>answer(b, c, q);
+    box.appendChild(b);
+  });
+}
+
+function answer(btn, choice, q){
+  if(locked) return;
+  locked = true;
+  const buttons = document.querySelectorAll('#choices .choice');
+  buttons.forEach(b=>b.disabled=true);
+  const stat = perMember[q.answerName]; stat.total++;
+  if(choice.isAnswer){
+    stat.correct++;
+    score += q.difficulty==='easy' ? 10 : 15;
+    streak++;
+    btn.classList.add('correct');
+    buttons.forEach(b=>{ if(b!==btn) b.classList.add('dim'); });
+    burstHearts(btn);
+  } else {
+    streak = 0;
+    btn.classList.add('wrong');
+    buttons.forEach(b=>{
+      const t = b.textContent.trim();
+      if(t.endsWith(q.answerName)) b.classList.add('correct'); else if(b!==btn) b.classList.add('dim');
+    });
+  }
+  document.getElementById('score-pill').textContent = `💖 ${score}점`;
+  document.getElementById('streak').textContent = streak>=2 ? `🔥 ${streak}연속!` : '';
+  const ex = document.getElementById('explain');
+  ex.innerHTML = (choice.isAnswer ? '💗 <b>정답!</b> ' : `💔 아쉬워요! 정답은 <b>${q.answerName}</b> `) + (q.explanation||'');
+  ex.classList.add('show');
+  document.getElementById('next-btn').classList.add('show');
+  document.getElementById('next-btn').textContent = current===order.length-1 ? '🎀 결과 보기' : '다음 문제 ➜';
+}
+
+function burstHearts(el){
+  const r = el.getBoundingClientRect();
+  for(let i=0;i<8;i++){
+    const h = document.createElement('div');
+    h.className = 'heart-burst';
+    h.textContent = ['💖','💛','🩷','✨'][i%4];
+    h.style.left = (r.left + r.width/2)+'px';
+    h.style.top = (r.top)+'px';
+    h.style.setProperty('--dx', (Math.random()*160-80)+'px');
+    h.style.setProperty('--dy', (-(60+Math.random()*120))+'px');
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(), 950);
+  }
+}
+
+function nextQuestion(){
+  current++;
+  if(current>=order.length){ showResult(); return; }
+  renderQuestion();
+}
+
+function rankOf(pct){
+  if(pct>=95) return ['👑','반말방 여신/남신급 통솔자','방의 모든 에피소드를 꿰고 있네요. 당신은 진짜 이 방 사람!'];
+  if(pct>=80) return ['💖','반말방 핵인싸','웬만한 썰은 다 알고 있어요. 보룸 상주러 인정!'];
+  if(pct>=60) return ['💛','반말방 활동왕','꽤 알고 있지만 놓친 에피소드도 있어요. 채팅 더 열심히 봅시다 ㅋㅋ'];
+  if(pct>=40) return ['🌸','반말방 눈팅러','대화를 조금만 더 열심히 보세요! 도감 읽고 재도전 ㄱㄱ'];
+  return ['🐣','반말방 뉴비','도감부터 정독하고 다시 도전해보세요!'];
+}
+
+function showResult(){
+  const total = order.length;
+  const correctCount = Object.values(perMember).reduce((a,s)=>a+s.correct,0);
+  const pct = Math.round(correctCount/total*100);
+  const [emoji, rank, msg] = rankOf(pct);
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-score').textContent = score+'점';
+  document.getElementById('result-rank').textContent = rank;
+  document.getElementById('result-msg').innerHTML = `${total}문제 중 <b>${correctCount}개</b> 정답 (${pct}%)<br>${msg}`;
+  document.getElementById('result-gallery').innerHTML = DATA.members.map(m=>{
+    const s = perMember[m.name];
+    const mastered = s.total>0 && s.correct===s.total;
+    return `<div class="member-card ${mastered?'mastered':''}">
+      <div class="mc-head"><span class="mc-emoji">${m.emoji}</span><span class="mc-name">${m.name}</span></div>
+      <div class="mc-liner">${m.oneLiner}</div>
+      <div class="mc-stat">${mastered?'🌟 마스터!':'💖 '+s.correct+'/'+s.total+' 정답'}</div>
+    </div>`;
+  }).join('');
+  show('screen-result');
+}
+
+function showDex(){
+  document.getElementById('dex-list').innerHTML = DATA.members.map(m=>`
+    <div class="card dex-card">
+      <div class="mc-head"><span class="mc-emoji">${m.emoji}</span><span class="mc-name">${m.name}</span></div>
+      <div class="mc-liner">${m.oneLiner}</div>
+      <div class="dex-episodes" style="margin-top:6px"><b>말버릇:</b> ${m.catchphrases.join(' · ')}</div>
+      <div class="dex-episodes"><b>특징:</b> ${m.traits.join(' / ')}</div>
+      <div class="dex-episodes"><b>에피소드:</b><br>${m.episodes.map(e=>'• <b>'+e.title+'</b> — '+e.summary).join('<br>')}</div>
+    </div>`).join('');
+  show('screen-dex');
+}
+
+function goHome(){ show('screen-start'); }
+function restart(){ startQuiz(); }
+</script>
+</body>
+</html>
