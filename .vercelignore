@@ -6,3 +6,5 @@ verify_*.png
 .playwright-cli/
 .git/
 node_modules/
+balance_votes/
+bal_*.png

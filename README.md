@@ -13,15 +13,22 @@
 - 멤버당 5~6장의 에피소드 카드 (총 59장, 전부 실제 대화에서 검증)
 - 결과: 내 이상형 + 아쉬운 2위 + 궁합 퍼센트 + 방 공유용 복사 버튼
 
+### 3탄 — 😈 반말방 밸런스 게임 (`balance.html`)
+- 방 밈 기반 극단의 양자택일 20문제
+- 멤버 10명이 사전 투표한 결과 공개 — 내 선택과 방의 선택 비교 (다수파😎 / 소수파😈 / 반반⚖️ 판정)
+- 선택마다 내 편/반대편 멤버들의 캐릭터 반응 멘트
+- 결과: 나와 가장 선택이 비슷한 멤버 "당신은 ○○파!" 랭킹 + 소수선택 칭호
+
 모든 인용문은 실제 대화 로그에서 검증된 발언만 사용합니다.
 
 ## 파일
 
-- `index.html`, `worldcup.html` — 게임 본체 (데이터 내장 단일 파일)
-- `*.template.html` + `build_quiz.py` / `build_worldcup.py` + `*_data.json` — 재생성 파이프라인
-- `verify.js`, `verify_worldcup.js` — Playwright 전체 플로우 자동 검증
+- `index.html`, `worldcup.html`, `balance.html` — 게임 본체 (데이터 내장 단일 파일)
+- `*.template.html` + `build_quiz.py` / `build_worldcup.py` / `build_balance.py` + `*_data.json` — 재생성 파이프라인
+- `verify.js`, `verify_worldcup.js`, `verify_balance.js` — Playwright 전체 플로우 자동 검증
 
 ## 검증
 
-- Playwright 실제 브라우저로 두 게임 전체 플로우 자동 검증 (JS 에러 0)
+- Playwright 실제 브라우저로 세 게임 전체 플로우 자동 검증 (JS 에러 0)
 - 멤버 10명의 실제 채팅 로그 기반 페르소나 에이전트가 블라인드 플레이 + 카드 원문 대조 → 불공정 문항/사실 오류 수정 후 전원 통과
+- 밸런스 게임: 페르소나 10명이 20문제 전부 실제 투표 + 반응 멘트 작성, 부적절 문항 2개 교체 후 재투표

@@ -5,3 +5,6 @@ persona_results/
 verify_*.png
 .playwright-cli/
 .vercel
+balance_votes/
+bal_*.png
+.DS_Store
